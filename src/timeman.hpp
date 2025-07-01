@@ -18,9 +18,16 @@ inline int64_t elapsed_ms() {
     return elapsed.count();
 }
 
-// Returns true if time exceeds hard bound time limit
+// Returns true if elapsed time exceeds hard bound time limit
 inline bool hard_bound_time_exceeded() {
     auto now = std::chrono::system_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - search_start_time);
     return elapsed.count() > max_hard_time_ms;
+}
+
+// Returns true if elapsed time exceeds soft bound time limit
+inline bool soft_bound_time_exceeded() {
+    auto now = std::chrono::system_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - search_start_time);
+    return elapsed.count() > max_soft_time_ms;
 }
