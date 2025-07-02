@@ -16,11 +16,12 @@ chess::Move root_best_move;
 // ply. This works because a position which is a win for white is a loss for black and vice versa. Most "strong" chess engines use
 // negamax instead of minimax because it makes the code much tidier. Not sure about how much is gains though. The "fail soft" basically
 // means we return max_value instead of alpha. This gives us more information to do puning etc etc.
-int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta){
+int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int32_t ply){
 
     // Search variables
     // max_score for fail-soft negamax
     int32_t best_score = -POSITIVE_INFINITY;
+    bool is_root = ply == 0;
 
     // Handle time management
     // Here is where our hard-bound time mnagement is. When the search time 
@@ -66,14 +67,16 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta){
         // Basic make and undo functionality. Copy-make should be faster but that
         // debugging is for later
         board.makeMove(current_move);
-        int32_t score = -alpha_beta(board, depth - 1, -beta, -alpha);
+        int32_t score = -alpha_beta(board, depth - 1, -beta, -alpha, ply + 1);
         board.unmakeMove(current_move);
 
         // Updating best_score and alpha beta pruning
         // I did not actually test this in sprt 
         if (score > best_score){
             best_score = score;
-            root_best_move = current_move;
+
+            if (is_root)
+                root_best_move = current_move;
 
             // Update alpha
             if (score > alpha){

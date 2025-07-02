@@ -49,10 +49,6 @@ using namespace chess;
 
 Board board = Board(STARTPOS_FEN);
 
-int64_t max_soft_time_ms;
-int64_t max_hard_time_ms;
-std::chrono::time_point<std::chrono::system_clock> search_start_time;
-
 // Prints the board, nothing else
 void print_board(const Board &board){
     int display_board[64]{};
@@ -277,9 +273,12 @@ int main() {
         // the specified depth -- ie. No iterative deepening. Commands
         // should look like search <depth>
         else if (words[0] == "search"){
+            max_hard_time_ms = 10000000000;
+            max_soft_time_ms = 10000000000;
             int32_t depth = stoi(words[1]);
-            int32_t score = alpha_beta(board, depth, DEFAULT_ALPHA, DEFAULT_BETA);
-            cout << score << "\n";
+            int32_t score = alpha_beta(board, depth, DEFAULT_ALPHA, DEFAULT_BETA, 0);
+            cout << "info score cp " << score << "\n";
+            cout << "bestmove " << uci::moveToUci(root_best_move) << "\n"; 
         }
 
         // Non-standard UCI command, but very useful for debugging purposes.
