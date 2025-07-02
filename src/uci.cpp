@@ -10,6 +10,7 @@
 #include "uci.hpp"
 #include "timeman.hpp"
 #include "eval.hpp"
+#include "search.hpp"
 
 using namespace std;
 using namespace chess;
@@ -47,6 +48,10 @@ using namespace chess;
 // Full uci spec https://backscattering.de/chess/uci/
 
 Board board = Board(STARTPOS_FEN);
+
+int64_t max_soft_time_ms;
+int64_t max_hard_time_ms;
+std::chrono::time_point<std::chrono::system_clock> search_start_time;
 
 // Prints the board, nothing else
 void print_board(const Board &board){
@@ -266,6 +271,15 @@ int main() {
             }
 
             search_start_time = chrono::system_clock::now();
+        }
+
+        // Non-standard UCI command. Gets the engine to search at exactly
+        // the specified depth -- ie. No iterative deepening. Commands
+        // should look like search <depth>
+        else if (words[0] == "search"){
+            int32_t depth = stoi(words[1]);
+            int32_t score = alpha_beta(board, depth, DEFAULT_ALPHA, DEFAULT_BETA);
+            cout << score << "\n";
         }
 
         // Non-standard UCI command, but very useful for debugging purposes.

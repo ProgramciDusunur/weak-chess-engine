@@ -1,5 +1,5 @@
 #pragma once
-#include <cstdint>
+#include <stdint.h>
 
 #include "packing.hpp"
 
@@ -69,5 +69,6 @@ inline const int32_t PSQT[6][64] = {
 // For a tapered evaluation
 inline const int32_t game_phase_increment[6] = {0, 1, 1, 2, 4, 0};
 
-// Evaluation function to be called
+// Tapered static evaluation function given a board position
+// returns score relative to player
 int32_t evaluate(const chess::Board& board);
