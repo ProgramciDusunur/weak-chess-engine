@@ -29,6 +29,9 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     int32_t best_score = -POSITIVE_INFINITY;
     bool is_root = ply == 0;
 
+    // For updating Transposition table later
+    int32_t old_alpha = alpha;  
+
     // Increment node count
     total_nodes++;
 
@@ -62,15 +65,25 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // Checkmate detection
     // When we are in checkmate during our turn, we lost the game, therefore we 
     // should return a large negative value
-    if (board.inCheck() && all_moves.size() == 0)
-        return -POSITIVE_MATE_SCORE + ply;
+    if (all_moves.size() == 0){
+        if (board.inCheck())
+            return -POSITIVE_MATE_SCORE + ply;
+
+        // Stalemate jumpscare!
+        else {
+            return 0;
+        }
+    }
 
     // Depth 0 -- we end our search and return eval (haven't started qs yet)
     if (depth == 0)
         return evaluate(board);
 
-    // For updating Transposition table later
-    bool alpha_raised = false;   
+    // Transposition Table cutoffs
+    // Only cut with a greater or equal depth search
+    //if (entry.depth >= depth && !is_root && tt_hit && ((entry.type == NodeType::EXACT) || (entry.type == NodeType::LOWERBOUND && entry.score >= beta) || (entry.type == NodeType::UPPERBOUND && entry.score <= alpha)))
+      //  return entry.score;
+
     
     // Move ordering
     sort_moves(all_moves, tt_hit, entry.best_move);
@@ -98,7 +111,6 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
             // Update alpha
             if (score > alpha){
-                alpha_raised = true;
                 alpha = score;
 
                 // Alpha-Beta Pruning
@@ -109,7 +121,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         }
     }
 
-    NodeType bound = best_score >= beta ? NodeType::LOWERBOUND : alpha_raised ? NodeType::EXACT : NodeType::UPPERBOUND;
+    NodeType bound = best_score >= beta ? NodeType::LOWERBOUND : alpha > old_alpha ? NodeType::EXACT : NodeType::UPPERBOUND;
     uint16_t best_move_tt = bound == NodeType::UPPERBOUND ? 0 : encode_move(current_best_move.from(), current_best_move.to(), current_best_move.typeOf());
 
     // Storing transpositions
