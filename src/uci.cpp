@@ -1,3 +1,6 @@
+// Dev command for engine testing
+// fastchess.exe -engine cmd=C:\Users\dragon\Desktop\weak-dev\src\win-x64\weak.exe name=WeakDev -engine cmd=C:\Users\dragon\Desktop\weak-chess-engine\src\win-x64\weak.exe name=Weak -each tc=8+0.08 -rounds 1000000 -repeat -concurrency 64 -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05 -openings file=C:\Users\dragon\Downloads\8movesv3.pgn format=pgn plies=16
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +14,7 @@
 #include "timeman.hpp"
 #include "eval.hpp"
 #include "search.hpp"
+#include "transposition.hpp"
 
 using namespace std;
 using namespace chess;
@@ -181,6 +185,10 @@ int main() {
         else if (words[0] == "isready")
             cout << "readyok\n";
 
+        else if (words[0] == "ucinewgame"){
+            tt.clear();
+        }
+
         // Parse the position command. The position commands comes in a number
         // of forms, particularly "position startpos", "position startpos moves
         // ...", "position fen <fen>", "position fen <fen> moves ...". Note the
@@ -240,6 +248,8 @@ int main() {
         // "movetime" or whatever. Who cares? We just need wtime and btime for our super simple
         // time management. We don't even need increment!
         else if (words[0] == "go"){
+            global_depth = 0;
+            total_nodes = 0;
             max_hard_time_ms = 10000;
             max_soft_time_ms = 30000;
             if (words.size() > 1){
@@ -248,7 +258,7 @@ int main() {
                     max_soft_time_ms = 10000000000;
                 }
                 else {
-                    for (int i = 1; i + 2 < words.size(); i+=2){
+                    for (int i = 1; i + 1 < words.size(); i+=2){
                         // If its white to move we get white's time else we get black's time
                         if (board.sideToMove() == Color::WHITE && words[i] == "wtime"){
                             max_hard_time_ms = std::stoll(words[i+1]) / HARD_TM_RATIO;
@@ -267,16 +277,19 @@ int main() {
             }
 
             search_start_time = chrono::system_clock::now();
+            search_root(board);
         }
 
         // Non-standard UCI command. Gets the engine to search at exactly
         // the specified depth -- ie. No iterative deepening. Commands
         // should look like search <depth>
         else if (words[0] == "search"){
+            global_depth = 0;
+            total_nodes = 0;
             max_hard_time_ms = 10000000000;
             max_soft_time_ms = 10000000000;
-            int32_t depth = stoi(words[1]);
-            int32_t score = alpha_beta(board, depth, DEFAULT_ALPHA, DEFAULT_BETA, 0);
+            int16_t depth = stoi(words[1]);
+            int16_t score = alpha_beta(board, depth, DEFAULT_ALPHA, DEFAULT_BETA, 0);
             cout << "info score cp " << score << "\n";
             cout << "bestmove " << uci::moveToUci(root_best_move) << "\n"; 
         }
@@ -286,6 +299,12 @@ int main() {
         // more verbose to just use "print"
         else if (words[0] == "print")
             print_board(board);
+
+        // Non-standard UCI command for printing time management info
+        else if (words[0] == "time"){
+            cout << "info string soft bound " << max_soft_time_ms << "\n";
+            cout << "info string hard bound " << max_hard_time_ms << "\n";
+        }
 
         // Mostly for debugging purposes. This is a nonstandard UCI command
         // When "seval" is called, we return the static evaluation of the

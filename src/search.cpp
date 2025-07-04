@@ -1,14 +1,20 @@
 #include <stdint.h>
+#include <iostream>
 #include <chrono> 
 
 #include "chess.hpp"
 #include "timeman.hpp"
 #include "search.hpp"
 #include "eval.hpp"
+#include "transposition.hpp"
+#include "ordering.hpp"
 
 using namespace chess;
+using namespace std;
 
 chess::Move root_best_move;
+int32_t global_depth = 0;
+int64_t total_nodes = 0;
 
 // Search Function
 // We are basically using a fail soft "negamax" search, see here for more info: https://minuskelvin.net/chesswiki/content/minimax.html#negamax
@@ -22,6 +28,9 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // max_score for fail-soft negamax
     int32_t best_score = -POSITIVE_INFINITY;
     bool is_root = ply == 0;
+
+    // Increment node count
+    total_nodes++;
 
     // Handle time management
     // Here is where our hard-bound time mnagement is. When the search time 
@@ -41,6 +50,10 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     if (board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition())
         return 0;
 
+    // Get the TT Entry for current position
+    TTEntry entry;
+    uint64_t zobrists_key = board.zobrist(); 
+    bool tt_hit = tt.probe(zobrists_key, entry);
 
     // Get all legal moves for our moveloop in our search
     Movelist all_moves;
@@ -50,17 +63,21 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // When we are in checkmate during our turn, we lost the game, therefore we 
     // should return a large negative value
     if (board.inCheck() && all_moves.size() == 0)
-        return -POSITIVE_MATE_SCORE;
+        return -POSITIVE_MATE_SCORE + ply;
 
     // Depth 0 -- we end our search and return eval (haven't started qs yet)
     if (depth == 0)
         return evaluate(board);
 
     // For updating Transposition table later
-    bool alpha_raised = false;    
+    bool alpha_raised = false;   
+    
+    // Move ordering
+    sort_moves(all_moves, tt_hit, entry.best_move);
 
     // Main move loop
     // For loop is faster tha foreach :)
+    Move current_best_move;
     for (int idx = 0; idx < all_moves.size(); idx++){
         Move current_move = all_moves[idx];
 
@@ -74,6 +91,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         // I did not actually test this in sprt 
         if (score > best_score){
             best_score = score;
+            current_best_move = current_move;
 
             if (is_root)
                 root_best_move = current_move;
@@ -91,10 +109,35 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         }
     }
 
+    NodeType bound = best_score >= beta ? NodeType::LOWERBOUND : alpha_raised ? NodeType::EXACT : NodeType::UPPERBOUND;
+    uint16_t best_move_tt = bound == NodeType::UPPERBOUND ? 0 : encode_move(current_best_move.from(), current_best_move.to(), current_best_move.typeOf());
+
+    // Storing transpositions
+    tt.store(zobrists_key, best_score, depth, bound, best_move_tt);
+
     return best_score;
 
 }
 
-int32_t search_manager(Board &board){
+// Iterative deepening time management loop
+// Uses soft bound time management
+int32_t search_root(Board &board){
+    try {
+        while (!soft_bound_time_exceeded()){
+            // Increment the global depth since global_depth starts from 0
+            global_depth++;
+            int32_t score = alpha_beta(board, global_depth, DEFAULT_ALPHA, DEFAULT_BETA, 0);
+            int64_t elapsed_time = elapsed_ms();
+            cout << "info depth " << global_depth << " time " << elapsed_time << " score cp " << score << " nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << "\n";
+        }
+    }
+
+    // Hard-bound time management catch
+    catch (const SearchAbort& e) { 
+        
+    }
+
+    cout << "bestmove " << uci::moveToUci(root_best_move) << "\n";
+
     return 0;
 }
