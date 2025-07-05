@@ -51,7 +51,7 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
     // Eval pruning - If a static evaluation of the board will
     // exceed beta, then we can stop the search here. Also, if the static
     // eval exceeds alpha, we can call our static eval the new alpha (comment from Ethereal)
-    int32_t eval = evaluate(board);
+    int32_t eval = (int32_t)evaluate(board);
     int32_t best_score = eval;
     if (alpha > eval) eval = alpha;
     if (alpha >= beta) return eval;

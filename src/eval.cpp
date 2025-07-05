@@ -74,10 +74,10 @@ inline const int32_t PSQT[6][64] = {
 inline const int32_t game_phase_increment[6] = {0, 1, 1, 2, 4, 0};
 
 // This is our HCE evaluation function. 
-int16_t evaluate(const chess::Board& board) {
+int32_t evaluate(const chess::Board& board) {
 
-    int16_t score_array[2] = {0,0};
-    int16_t phase = 0;
+    int32_t score_array[2] = {0,0};
+    int32_t phase = 0;
 
     // Get all piece bitboards for efficient looping
     chess::Bitboard wp = board.pieces(chess::PieceType::PAWN, chess::Color::WHITE);
@@ -95,7 +95,7 @@ int16_t evaluate(const chess::Board& board) {
     chess::Bitboard all[] = {wp,wn,wb,wr,wq,wk,bp,bn,bb,br,bq,bk};
 
     // A fast way of getting all the pieces 
-    for (int16_t i = 0; i < 12; i++){        
+    for (int32_t i = 0; i < 12; i++){        
         chess::Bitboard curr_bb = all[i];
         while (!curr_bb.empty()) {
             int16_t sq = curr_bb.pop();
@@ -111,13 +111,13 @@ int16_t evaluate(const chess::Board& board) {
 
     }
 
-    int16_t stm = board.sideToMove() == Color::WHITE ? 0 : 1;
-    int16_t score = score_array[stm] - score_array[stm^1];
-    int16_t mg_score = unpack_mg(score);
-    int16_t eg_score = unpack_eg(score);
-    int16_t mg_phase = phase;
+    int32_t stm = board.sideToMove() == Color::WHITE ? 0 : 1;
+    int32_t score = score_array[stm] - score_array[stm^1];
+    int32_t mg_score = (int32_t)unpack_mg(score);
+    int32_t eg_score = (int32_t)unpack_eg(score);
+    int32_t mg_phase = phase;
     if (mg_phase > 24) mg_phase = 24;
-    int16_t eg_phase = 24 - mg_phase;
+    int32_t eg_phase = 24 - mg_phase;
 
 
     // Evaluation tapering, that is, interpolating mg and eg values depending on how many pieces
