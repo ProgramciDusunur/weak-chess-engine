@@ -28,6 +28,13 @@ struct SearchAbort : public std::exception {
 // The global best move variable
 extern chess::Move root_best_move;
 
+// Killers
+extern chess::Move killers[1024];
+inline void reset_killers(){
+    std::fill(std::begin(killers), std::end(killers), chess::Move{});
+}
+
+
 // The global depth variable
 extern int32_t global_depth;
 extern int64_t total_nodes;

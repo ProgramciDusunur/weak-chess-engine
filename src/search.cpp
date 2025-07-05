@@ -13,6 +13,7 @@ using namespace chess;
 using namespace std;
 
 chess::Move root_best_move;
+chess::Move killers[1024];
 int32_t global_depth = 0;
 int64_t total_nodes = 0;
 
@@ -189,7 +190,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     }
 
     // Move ordering
-    sort_moves(board, all_moves, tt_hit, entry.best_move);
+    sort_moves(board, all_moves, tt_hit, entry.best_move, ply);
 
     // Main move loop
     // For loop is faster tha foreach :)
@@ -229,7 +230,8 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                 alpha = score;
 
                 // Alpha-Beta Pruning
-                if (score >= beta){
+                if (alpha >= beta){
+                    killers[ply] = current_move;
                     break;
                 }
             }

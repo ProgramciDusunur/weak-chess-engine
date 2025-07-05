@@ -10,9 +10,10 @@
 
 // High bonus score for TT move
 constexpr int32_t TT_BONUS = 1000000;
+constexpr int32_t KILLER_BONUS = 90000;
 
 // Sorts moves by giving TT move highest priority, then by MVV-LVA score for captures
-inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_hit, uint16_t tt_move) {
+inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_hit, uint16_t tt_move, int32_t ply) {
     // Pair each move with its score
     std::vector<std::pair<chess::Move, int32_t>> scored_moves;
 
@@ -25,9 +26,15 @@ inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_h
         }
 
         // Don't waste time on mvv-lva when it is already a tt move
-        else {
+        else if (board.isCapture(move)) {
             // MVV-LVA score (captures only)
             score += mvv_lva(board, move);
+        }
+        else {
+            // Killer moves
+            if (killers[ply] == move){
+                score += KILLER_BONUS;
+            }
         }
 
         scored_moves.emplace_back(move, score);
