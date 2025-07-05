@@ -154,6 +154,7 @@ int main() {
     
     // While loop for input
     while (true) {
+        
         // Get the current input
         getline(cin, input);
 

@@ -16,7 +16,6 @@ chess::Move root_best_move;
 int32_t global_depth = 0;
 int64_t total_nodes = 0;
 
-/*
 // Quiescence search. When we are in a noisy position (there are captures), we try to "quiet" the position by
 // going down capture trees using negamax and return the eval when we re in a quiet position
 int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
@@ -39,7 +38,6 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
     bool tt_hit = tt.probe(zobrists_key, entry);
 
     // Transposition Table cutoffs
-    // Only cut with a greater or equal depth search
     if (tt_hit && ((entry.type == NodeType::EXACT) || (entry.type == NodeType::LOWERBOUND && entry.score >= beta) || (entry.type == NodeType::UPPERBOUND && entry.score <= alpha)))
         return entry.score;
         
@@ -72,20 +70,19 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
         board.unmakeMove(current_move);
 
         // Updating best_score and alpha beta pruning
-        // I did not actually test this in sprt 
         if (score > best_score){
             best_score = score;
             current_best_move = current_move;
+        }
 
-            // Update alpha
-            if (score > alpha){
-                alpha = score;
+        // Update alpha
+        if (score > alpha){
+            alpha = score;
+        }
 
-                // Alpha-Beta Pruning
-                if (score >= beta){
-                    break;
-                }
-            }
+        // Alpha-Beta Pruning
+        if (score >= beta){
+            break;
         }
     }
 
@@ -97,7 +94,6 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
 
     return best_score;
 }
-*/
 
 // Search Function
 // We are basically using a fail soft "negamax" search, see here for more info: https://minuskelvin.net/chesswiki/content/minimax.html#negamax
@@ -156,7 +152,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
     // Depth <= 0 (because we allow depth to drop below 0) -- we end our search and return eval (haven't started qs yet)
     if (depth <= 0)
-        return evaluate(board); //q_search(board, alpha, beta, ply);
+        return q_search(board, alpha, beta, ply);
 
     // Get the TT Entry for current position
     TTEntry entry;
@@ -192,20 +188,31 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
             return score;
     }
 
-
     // Move ordering
     sort_moves(board, all_moves, tt_hit, entry.best_move);
 
     // Main move loop
     // For loop is faster tha foreach :)
     Move current_best_move;
+    int32_t move_count = 0;
     for (int idx = 0; idx < all_moves.size(); idx++){
+
+        int32_t reduction = 0;
+
+        move_count++;
+
         Move current_move = all_moves[idx];
+
+        // Quiet late moves reduction - we have to trust that our
+        // move ordering is good enough most of the time to order
+        // best moves at the start
+        //if (depth >= late_move_reduction_depth && move_count >= late_move_reduction_count && !node_is_check && !board.isCapture(current_move))
+          //  reduction++;
 
         // Basic make and undo functionality. Copy-make should be faster but that
         // debugging is for later
         board.makeMove(current_move);
-        int32_t score = -alpha_beta(board, depth - 1, -beta, -alpha, ply + 1);
+        int32_t score = -alpha_beta(board, depth - reduction - 1, -beta, -alpha, ply + 1);
         board.unmakeMove(current_move);
 
         // Updating best_score and alpha beta pruning

@@ -15,6 +15,8 @@ constexpr int32_t reverse_futility_margin = 60;
 constexpr int32_t reverse_futility_depth = 8;
 constexpr int32_t null_move_depth = 2;
 constexpr int32_t null_move_reduction = 4;
+//constexpr int32_t late_move_reduction_count = 5;
+//constexpr int32_t late_move_reduction_depth = 3;
 
 // Our custom error
 struct SearchAbort : public std::exception {
