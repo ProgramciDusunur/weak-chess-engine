@@ -81,12 +81,13 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
     // Transposition Table cutoffs
     // Only cut with a greater or equal depth search
+    // Or can also when !(alpha < score < beta) maybe
     if (entry.depth >= depth && !is_root && tt_hit && ((entry.type == NodeType::EXACT) || (entry.type == NodeType::LOWERBOUND && entry.score >= beta) || (entry.type == NodeType::UPPERBOUND && entry.score <= alpha)))
         return entry.score;
 
     
     // Move ordering
-    sort_moves(all_moves, tt_hit, entry.best_move);
+    sort_moves(board, all_moves, tt_hit, entry.best_move);
 
     // Main move loop
     // For loop is faster tha foreach :)

@@ -1,20 +1,41 @@
 #pragma once
 
-#include <algorithm> 
+#include <algorithm>
+#include <vector>
 
 #include "chess.hpp"
 #include "ordering.hpp"
 #include "transposition.hpp"
+#include "mvv_lva.hpp"
 
-// Move ordering
-inline void sort_moves(chess::Movelist& movelist, bool tt_hit, uint16_t tt_move) {
-    std::sort(movelist.begin(), movelist.end(), [tt_move, tt_hit](const chess::Move& a, const chess::Move& b) {
-        bool a_is_tt = encode_move(a.from(), a.to(), a.typeOf()) == tt_move;
-        bool b_is_tt = encode_move(b.from(), b.to(), b.typeOf()) == tt_move;
+// High bonus score for TT move
+constexpr int32_t TT_BONUS = 1000000;
 
-        if (tt_hit && a_is_tt != b_is_tt)
-            return a_is_tt > b_is_tt;
+// Sorts moves by giving TT move highest priority, then by MVV-LVA score for captures
+inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_hit, uint16_t tt_move) {
+    // Pair each move with its score
+    std::vector<std::pair<chess::Move, int32_t>> scored_moves;
 
-        return false;
-    });
+    for (const auto& move : movelist) {
+        int32_t score = 0;
+
+        // TT move bonus
+        if (tt_hit && encode_move(move.from(), move.to(), move.typeOf()) == tt_move) {
+            score += TT_BONUS;
+        }
+
+        // MVV-LVA score (captures only)
+        score += mvv_lva(board, move);
+
+        scored_moves.emplace_back(move, score);
+    }
+
+    // Sort in descending order of score
+    std::sort(scored_moves.begin(), scored_moves.end(),
+              [](const auto& a, const auto& b) { return a.second > b.second; });
+
+    // Update movelist with sorted moves
+    for (size_t i = 0; i < movelist.size(); ++i) {
+        movelist[i] = scored_moves[i].first;
+    }
 }
