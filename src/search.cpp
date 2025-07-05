@@ -154,8 +154,8 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         }
     }
 
-    // Depth 0 -- we end our search and return eval (haven't started qs yet)
-    if (depth == 0)
+    // Depth <= 0 (because we allow depth to drop below 0) -- we end our search and return eval (haven't started qs yet)
+    if (depth <= 0)
         return evaluate(board); //q_search(board, alpha, beta, ply);
 
     // Get the TT Entry for current position
@@ -165,7 +165,6 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
     // Transposition Table cutoffs
     // Only cut with a greater or equal depth search
-    // Or can also when !(alpha < score < beta) maybe
     if (entry.depth >= depth && !is_root && tt_hit && ((entry.type == NodeType::EXACT) || (entry.type == NodeType::LOWERBOUND && entry.score >= beta) || (entry.type == NodeType::UPPERBOUND && entry.score <= alpha)))
         return entry.score;
 
@@ -178,6 +177,21 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // and return eval without searching moves
     if (!node_is_check && depth <= reverse_futility_depth && static_eval - reverse_futility_margin * depth >= beta)
         return static_eval;
+
+    // Null move pruning. Basically, we can assume that making a move 
+    // is always better than not making our move most of the time
+    // except if it's in a zugzwang. Hence, if we skip out turn and
+    // we still maintain beta, then we can prune early. Also do not
+    // do NMP when tt suggests that it should fail immediately
+    if (!node_is_check && static_eval >= beta && depth >= null_move_depth && (!tt_hit || !(entry.type == NodeType::UPPERBOUND) || entry.score >= beta) && (board.hasNonPawnMaterial(Color::WHITE) || board.hasNonPawnMaterial(Color::BLACK))){
+        board.makeNullMove();
+        int32_t score = -alpha_beta(board, depth - null_move_reduction, -beta, -beta+1, ply + 1);
+        board.unmakeNullMove();
+
+        if (score >= beta)
+            return score;
+    }
+
 
     // Move ordering
     sort_moves(board, all_moves, tt_hit, entry.best_move);

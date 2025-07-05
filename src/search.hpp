@@ -13,6 +13,8 @@ constexpr int32_t DEFAULT_BETA = POSITIVE_INFINITY;
 // Sarch constants
 constexpr int32_t reverse_futility_margin = 60;
 constexpr int32_t reverse_futility_depth = 8;
+constexpr int32_t null_move_depth = 2;
+constexpr int32_t null_move_reduction = 4;
 
 // Our custom error
 struct SearchAbort : public std::exception {
