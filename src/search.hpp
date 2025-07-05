@@ -15,8 +15,8 @@ constexpr int32_t reverse_futility_margin = 60;
 constexpr int32_t reverse_futility_depth = 8;
 constexpr int32_t null_move_depth = 2;
 constexpr int32_t null_move_reduction = 4;
-//constexpr int32_t late_move_reduction_count = 5;
-//constexpr int32_t late_move_reduction_depth = 3;
+//constexpr int32_t late_move_reduction_count = 4;
+//constexpr int32_t late_move_reduction_depth = 4;
 
 // Our custom error
 struct SearchAbort : public std::exception {
@@ -29,11 +29,12 @@ struct SearchAbort : public std::exception {
 extern chess::Move root_best_move;
 
 // Killers
-extern chess::Move killers[1024];
+extern chess::Move killers[2][1024];
 inline void reset_killers(){
-    std::fill(std::begin(killers), std::end(killers), chess::Move{});
+    for (int i = 0; i < 2; ++i)
+        for (int j = 0; j < 1024; ++j)
+            killers[i][j] = chess::Move{};
 }
-
 
 // The global depth variable
 extern int32_t global_depth;

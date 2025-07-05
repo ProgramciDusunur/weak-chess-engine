@@ -32,7 +32,7 @@ inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_h
         }
         else {
             // Killer moves
-            if (killers[ply] == move){
+            if (killers[0][ply] == move || killers[1][ply] == move){
                 score += KILLER_BONUS;
             }
         }

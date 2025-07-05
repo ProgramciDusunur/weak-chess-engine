@@ -13,7 +13,7 @@ using namespace chess;
 using namespace std;
 
 chess::Move root_best_move;
-chess::Move killers[1024];
+chess::Move killers[2][1024];
 int32_t global_depth = 0;
 int64_t total_nodes = 0;
 
@@ -26,11 +26,11 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
     // Handle time management
     // Here is also where our hard-bound time mnagement is. When the search time 
     // exceeds our maximum hard bound time limit
-    if (global_depth >= 1 && hard_bound_time_exceeded())
+    if (global_depth > 1 && hard_bound_time_exceeded())
         throw SearchAbort();
 
     // Draw detections
-    if (board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition())
+    if (global_depth > 1 && (board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition()))
         return 0;
 
     // Get the TT Entry for current position
@@ -121,7 +121,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // Handle time management
     // Here is where our hard-bound time mnagement is. When the search time 
     // exceeds our maximum hard bound time limit
-    if (global_depth >= 1 && hard_bound_time_exceeded())
+    if (global_depth > 1 && hard_bound_time_exceeded())
         throw SearchAbort();
 
     // Draw detections
@@ -133,7 +133,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // avoid draws more or like drawn positions. This surely weakens the
     // engine when playing against another at the same level. But it is
     // irrelevant in our case.
-    if (board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition())
+    if (global_depth > 1 && (board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition()))
         return 0;
 
     // Get all legal moves for our moveloop in our search
@@ -143,7 +143,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // Checkmate detection
     // When we are in checkmate during our turn, we lost the game, therefore we 
     // should return a large negative value
-    if (all_moves.size() == 0){
+    if (global_depth > 1 && all_moves.size() == 0){
         if (node_is_check)
             return -POSITIVE_MATE_SCORE + ply;
 
@@ -198,6 +198,11 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // For loop is faster tha foreach :)
     Move current_best_move;
     int32_t move_count = 0;
+
+    // Clear killers of next ply
+    killers[0][ply+1] = Move{}; 
+    killers[1][ply+1] = Move{}; 
+
     for (int idx = 0; idx < all_moves.size(); idx++){
 
         int32_t reduction = 0;
@@ -252,7 +257,14 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
                 // Alpha-Beta Pruning
                 if (alpha >= beta){
-                    killers[ply] = current_move;
+
+                    // Killer move heuristic
+                    // We have 2 killers per ply
+                    // We don't duplicate killers
+                    if (current_move != killers[0][ply]){
+                        killers[1][ply] = killers[0][ply]; 
+                        killers[0][ply] = current_move;
+                    }
                     break;
                 }
             }
