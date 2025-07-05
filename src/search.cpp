@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <iostream>
 #include <chrono> 
+#include <algorithm>
 
 #include "chess.hpp"
 #include "timeman.hpp"
@@ -13,7 +14,8 @@ using namespace chess;
 using namespace std;
 
 chess::Move root_best_move;
-chess::Move killers[2][1024];
+chess::Move killers[2][1024]{};
+int32_t quiet_history[2][64][64]{};
 int32_t global_depth = 0;
 int64_t total_nodes = 0;
 
@@ -207,10 +209,12 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
         int32_t reduction = 0;
         int32_t extension = 0;
-
+        
         move_count++;
 
         Move current_move = all_moves[idx];
+
+        bool is_noisy_move = board.isCapture(current_move);
 
         // Quiet late moves reduction - we have to trust that our
         // move ordering is good enough most of the time to order
@@ -258,12 +262,23 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                 // Alpha-Beta Pruning
                 if (alpha >= beta){
 
-                    // Killer move heuristic
-                    // We have 2 killers per ply
-                    // We don't duplicate killers
-                    if (current_move != killers[0][ply]){
-                        killers[1][ply] = killers[0][ply]; 
-                        killers[0][ply] = current_move;
+                    // Quiet move heuristics
+                    if (!is_noisy_move){
+                        // Killer move heuristic
+                        // We have 2 killers per ply
+                        // We don't duplicate killers
+                        if (current_move != killers[0][ply]){
+                            killers[1][ply] = killers[0][ply]; 
+                            killers[0][ply] = current_move;
+                        }
+
+                        // History Heuristic
+                        bool turn = board.sideToMove() == chess::Color::WHITE;
+                        int32_t from = current_move.from().index();
+                        int32_t to = current_move.to().index();
+
+                        int32_t bonus = clamp(depth * depth, -MAX_HISTORY, MAX_HISTORY);
+                        quiet_history[turn][from][to] += bonus - quiet_history[turn][from][to] * abs(bonus) / MAX_HISTORY;
                     }
                     break;
                 }

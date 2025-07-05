@@ -36,6 +36,19 @@ inline void reset_killers(){
             killers[i][j] = chess::Move{};
 }
 
+// Quiet History [color][from][to]
+constexpr int32_t MAX_HISTORY = 16384;
+extern int32_t quiet_history[2][64][64];
+inline void reset_quiet_history() {
+    for (int color = 0; color < 2; ++color) {
+        for (int piece = 0; piece < 64; ++piece) {
+            for (int square = 0; square < 64; ++square) {
+                quiet_history[color][piece][square] = 0;
+            }
+        }
+    }
+}
+
 // The global depth variable
 extern int32_t global_depth;
 extern int64_t total_nodes;
