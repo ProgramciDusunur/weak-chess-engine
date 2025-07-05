@@ -1,5 +1,5 @@
 // Dev command for engine testing
-// fastchess.exe -engine cmd=C:\Users\dragon\Desktop\weak-dev\src\win-x64\weak.exe name=WeakDev -engine cmd=C:\Users\dragon\Desktop\weak-chess-engine\src\win-x64\weak.exe name=Weak -each tc=8+0.08 -rounds 1000000 -repeat -concurrency 64 -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05 -openings file=C:\Users\dragon\Downloads\8movesv3.pgn format=pgn plies=16 --force-concurrency
+// fastchess.exe -engine cmd=C:\Users\dragon\Desktop\weak-dev\src\win-x64\weak.exe name=WeakDev -engine cmd=C:\Users\dragon\Desktop\weak-chess-engine\src\win-x64\weak.exe name=Weak -each tc=8+0.08 -rounds 1000000 -repeat -concurrency 64 -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05 -openings file=C:\Users\dragon\Downloads\8movesv3.pgn format=pgn plies=16 --force-concurrency -resign movecount=4 score=300 -draw movenumber=40 movecount=8 score=10
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

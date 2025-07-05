@@ -2,6 +2,7 @@
 #include <iostream>
 #include <chrono> 
 #include <algorithm>
+#include <cmath>
 
 #include "chess.hpp"
 #include "timeman.hpp"
@@ -219,8 +220,8 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         // Quiet late moves reduction - we have to trust that our
         // move ordering is good enough most of the time to order
         // best moves at the start
-        //if (depth >= late_move_reduction_depth && move_count >= late_move_reduction_count && !node_is_check && !board.isCapture(current_move))
-          //  reduction++;
+        if (!board.isCapture(current_move) && depth >= late_move_reduction_depth)
+            reduction += (int32_t)(((double)late_move_reduction_base / 100) + (((double)late_move_reduction_multiplier * log(depth) * log(move_count)) / 100));
 
         // Basic make and undo functionality. Copy-make should be faster but that
         // debugging is for later
@@ -300,12 +301,12 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 // Uses soft bound time management
 int32_t search_root(Board &board){
     try {
-        while (global_depth == 0 || !soft_bound_time_exceeded()){
+        while ((global_depth == 0 || !soft_bound_time_exceeded()) && global_depth < MAX_SEARCH_DEPTH){
             // Increment the global depth since global_depth starts from 0
             global_depth++;
             int32_t score = alpha_beta(board, global_depth, DEFAULT_ALPHA, DEFAULT_BETA, 0);
             int64_t elapsed_time = elapsed_ms();
-            cout << "info depth " << global_depth << " time " << elapsed_time << " score cp " << score << " nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << "\n";
+            cout << "info depth " << global_depth << " time " << elapsed_time << " score cp " << score << " nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
         }
     }
 
@@ -314,7 +315,7 @@ int32_t search_root(Board &board){
         
     }
 
-    cout << "bestmove " << uci::moveToUci(root_best_move) << "\n";
+    cout << "bestmove " << uci::moveToUci(root_best_move) << endl;
 
     return 0;
 }

@@ -1,15 +1,15 @@
 {
     "resign": {
-        "move_count": 1,
-        "score": 0,
+        "move_count": 4,
+        "score": 300,
         "twosided": false,
-        "enabled": false
+        "enabled": true
     },
     "draw": {
-        "move_number": 0,
-        "move_count": 1,
-        "score": 0,
-        "enabled": false
+        "move_number": 40,
+        "move_count": 8,
+        "score": 10,
+        "enabled": true
     },
     "maxmoves": {
         "move_count": 1,
@@ -57,7 +57,7 @@
     },
     "config_name": "config.json",
     "output": 0,
-    "seed": 14494144405591621629,
+    "seed": 17440352155677079872,
     "variant": 0,
     "ratinginterval": 10,
     "scoreinterval": 1,
@@ -123,26 +123,26 @@
     ],
     "stats": {
         "Weak vs WeakDev": {
-            "wins": 188,
-            "losses": 264,
-            "draws": 268,
-            "penta_WW": 17,
-            "penta_WD": 66,
-            "penta_WL": 88,
-            "penta_DD": 56,
-            "penta_LD": 90,
-            "penta_LL": 43
+            "wins": 176,
+            "losses": 302,
+            "draws": 396,
+            "penta_WW": 23,
+            "penta_WD": 71,
+            "penta_WL": 59,
+            "penta_DD": 95,
+            "penta_LD": 135,
+            "penta_LL": 54
         },
         "WeakDev vs Weak": {
-            "wins": 223,
-            "losses": 141,
-            "draws": 256,
-            "penta_WW": 35,
-            "penta_WD": 97,
-            "penta_WL": 56,
-            "penta_DD": 46,
-            "penta_LD": 67,
-            "penta_LL": 9
+            "wins": 212,
+            "losses": 178,
+            "draws": 296,
+            "penta_WW": 28,
+            "penta_WD": 88,
+            "penta_WL": 68,
+            "penta_DD": 64,
+            "penta_LD": 80,
+            "penta_LL": 15
         }
     }
 }

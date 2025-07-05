@@ -10,13 +10,17 @@ constexpr int32_t POSITIVE_INFINITY = 60000;
 constexpr int32_t DEFAULT_ALPHA = -POSITIVE_INFINITY;
 constexpr int32_t DEFAULT_BETA = POSITIVE_INFINITY;
 
+// Maximum search depth
+constexpr int32_t MAX_SEARCH_DEPTH = 1023;
+
 // Sarch constants
 constexpr int32_t reverse_futility_margin = 60;
 constexpr int32_t reverse_futility_depth = 8;
 constexpr int32_t null_move_depth = 2;
 constexpr int32_t null_move_reduction = 4;
-//constexpr int32_t late_move_reduction_count = 4;
-//constexpr int32_t late_move_reduction_depth = 4;
+constexpr int32_t late_move_reduction_depth = 3;
+constexpr int32_t late_move_reduction_base = 75;
+constexpr int32_t late_move_reduction_multiplier = 40;
 
 // Our custom error
 struct SearchAbort : public std::exception {
