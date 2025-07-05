@@ -33,7 +33,7 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
         throw SearchAbort();
 
     // Draw detections
-    if (global_depth > 1 && (board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition()))
+    if ((board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition()))
         return 0;
 
     // Get the TT Entry for current position
@@ -136,7 +136,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // avoid draws more or like drawn positions. This surely weakens the
     // engine when playing against another at the same level. But it is
     // irrelevant in our case.
-    if (global_depth > 1 && (board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition()))
+    if (!is_root && (board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition()))
         return 0;
 
     // Get all legal moves for our moveloop in our search
@@ -146,7 +146,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // Checkmate detection
     // When we are in checkmate during our turn, we lost the game, therefore we 
     // should return a large negative value
-    if (global_depth > 1 && all_moves.size() == 0){
+    if (!is_root && all_moves.size() == 0){
         if (node_is_check)
             return -POSITIVE_MATE_SCORE + ply;
 
@@ -297,16 +297,59 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
 }
 
+
 // Iterative deepening time management loop
 // Uses soft bound time management
 int32_t search_root(Board &board){
     try {
+        // Aspiration window search, we predict that the score from previous searches will be
+        // around the same as the next depth +/- some margin.
+        int32_t score = 0;
+        global_depth = 0;
         while ((global_depth == 0 || !soft_bound_time_exceeded()) && global_depth < MAX_SEARCH_DEPTH){
             // Increment the global depth since global_depth starts from 0
             global_depth++;
-            int32_t score = alpha_beta(board, global_depth, DEFAULT_ALPHA, DEFAULT_BETA, 0);
-            int64_t elapsed_time = elapsed_ms();
-            cout << "info depth " << global_depth << " time " << elapsed_time << " score cp " << score << " nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
+
+            int32_t alpha = DEFAULT_ALPHA;
+            int32_t beta = DEFAULT_BETA;
+            int32_t delta = aspiration_window_delta;
+            int32_t researches = 0;
+            int32_t new_score = 0;
+
+            if (global_depth >= aspiration_window_depth){
+                alpha = max(-POSITIVE_INFINITY, score - delta);
+                beta = min(POSITIVE_INFINITY, score + delta);
+            }
+            while (true){
+                new_score = alpha_beta(board, global_depth, alpha, beta, 0);
+                int64_t elapsed_time = elapsed_ms();
+
+                if (score <= alpha){
+                    cout << "info depth " << global_depth << " time " << elapsed_time << " score cp " << alpha << " upperbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
+                    beta = (alpha + beta) / 2;
+                    alpha = max(-POSITIVE_INFINITY, new_score - delta);
+                }
+                else if (score >= beta){
+                    cout << "info depth " << global_depth << " time " << elapsed_time << " score cp " << beta << " lowerbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
+                    beta = min(POSITIVE_INFINITY, new_score + delta);
+                }
+                else {
+                    cout << "info depth " << global_depth << " time " << elapsed_time << " score cp " << new_score << " nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
+                    break;
+                }
+
+                // If we exceed our time management, we stop widening and so one last search
+                if (soft_bound_time_exceeded() || researches >= maximum_aspiration_window_research){
+                    delta = POSITIVE_INFINITY;
+                }
+                else {
+                    researches++;
+                    delta += delta / 2;
+                }
+            }
+
+            score = new_score;
+            
         }
     }
 
