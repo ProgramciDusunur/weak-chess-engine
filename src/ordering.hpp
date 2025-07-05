@@ -24,8 +24,42 @@ inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_h
             score += TT_BONUS;
         }
 
-        // MVV-LVA score (captures only)
-        score += mvv_lva(board, move);
+        // Don't waste time on mvv-lva when it is already a tt move
+        else {
+            // MVV-LVA score (captures only)
+            score += mvv_lva(board, move);
+        }
+
+        scored_moves.emplace_back(move, score);
+    }
+
+    // Sort in descending order of score
+    std::sort(scored_moves.begin(), scored_moves.end(),
+              [](const auto& a, const auto& b) { return a.second > b.second; });
+
+    // Update movelist with sorted moves
+    for (size_t i = 0; i < movelist.size(); ++i) {
+        movelist[i] = scored_moves[i].first;
+    }
+}
+
+inline void sort_captures(chess::Board& board, chess::Movelist& movelist, bool tt_hit, uint16_t tt_move) {
+    // Pair each move with its score
+    std::vector<std::pair<chess::Move, int32_t>> scored_moves;
+
+    for (const auto& move : movelist) {
+        int32_t score = 0;
+
+        // TT move bonus
+        if (tt_hit && encode_move(move.from(), move.to(), move.typeOf()) == tt_move) {
+            score += TT_BONUS;
+        }
+
+        // Don't waste time on mvv-lva when it is already a tt move
+        else {
+            // MVV-LVA score (captures only)
+            score += mvv_lva(board, move);
+        }
 
         scored_moves.emplace_back(move, score);
     }

@@ -10,6 +10,10 @@ constexpr int32_t POSITIVE_INFINITY = 60000;
 constexpr int32_t DEFAULT_ALPHA = -POSITIVE_INFINITY;
 constexpr int32_t DEFAULT_BETA = POSITIVE_INFINITY;
 
+// Sarch constants
+constexpr int32_t reverse_futility_margin = 60;
+constexpr int32_t reverse_futility_depth = 8;
+
 // Our custom error
 struct SearchAbort : public std::exception {
     const char* what() const noexcept override {

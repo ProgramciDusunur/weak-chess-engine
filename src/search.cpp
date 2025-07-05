@@ -16,6 +16,89 @@ chess::Move root_best_move;
 int32_t global_depth = 0;
 int64_t total_nodes = 0;
 
+/*
+// Quiescence search. When we are in a noisy position (there are captures), we try to "quiet" the position by
+// going down capture trees using negamax and return the eval when we re in a quiet position
+int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
+    // Increment node count
+    total_nodes++;
+
+    // Handle time management
+    // Here is also where our hard-bound time mnagement is. When the search time 
+    // exceeds our maximum hard bound time limit
+    if (global_depth >= 1 && hard_bound_time_exceeded())
+        throw SearchAbort();
+
+    // Draw detections
+    if (board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition())
+        return 0;
+
+    // Get the TT Entry for current position
+    TTEntry entry;
+    uint64_t zobrists_key = board.zobrist(); 
+    bool tt_hit = tt.probe(zobrists_key, entry);
+
+    // Transposition Table cutoffs
+    // Only cut with a greater or equal depth search
+    if (tt_hit && ((entry.type == NodeType::EXACT) || (entry.type == NodeType::LOWERBOUND && entry.score >= beta) || (entry.type == NodeType::UPPERBOUND && entry.score <= alpha)))
+        return entry.score;
+        
+    // For TT updating later to determine bound
+    int32_t old_alpha = alpha;
+
+    // Eval pruning - If a static evaluation of the board will
+    // exceed beta, then we can stop the search here. Also, if the static
+    // eval exceeds alpha, we can call our static eval the new alpha (comment from Ethereal)
+    int32_t eval = evaluate(board);
+    int32_t best_score = eval;
+    if (alpha > eval) eval = alpha;
+    if (alpha >= beta) return eval;
+    
+    // Get all legal moves for our moveloop in our search
+    Movelist capture_moves;
+    movegen::legalmoves<movegen::MoveGenType::CAPTURE>(capture_moves, board);
+
+    // Move ordering
+    sort_captures(board, capture_moves, tt_hit, entry.best_move);
+
+    Move current_best_move;
+    for (int idx = 0; idx < capture_moves.size(); idx++){
+        Move current_move = capture_moves[idx];
+
+        // Basic make and undo functionality. Copy-make should be faster but that
+        // debugging is for later
+        board.makeMove(current_move);
+        int32_t score = -q_search(board, -beta, -alpha, ply + 1);
+        board.unmakeMove(current_move);
+
+        // Updating best_score and alpha beta pruning
+        // I did not actually test this in sprt 
+        if (score > best_score){
+            best_score = score;
+            current_best_move = current_move;
+
+            // Update alpha
+            if (score > alpha){
+                alpha = score;
+
+                // Alpha-Beta Pruning
+                if (score >= beta){
+                    break;
+                }
+            }
+        }
+    }
+
+    NodeType bound = best_score >= beta ? NodeType::LOWERBOUND : best_score > old_alpha ? NodeType::EXACT : NodeType::UPPERBOUND;
+    uint16_t best_move_tt = bound == NodeType::UPPERBOUND ? 0 : encode_move(current_best_move.from(), current_best_move.to(), current_best_move.typeOf());
+
+    // Storing transpositions
+    tt.store(zobrists_key, best_score, 0, bound, best_move_tt);
+
+    return best_score;
+}
+*/
+
 // Search Function
 // We are basically using a fail soft "negamax" search, see here for more info: https://minuskelvin.net/chesswiki/content/minimax.html#negamax
 // Negamax is basically a simplification of the famed minimax algorithm. Basically, it works by negating the score in the next
@@ -28,6 +111,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // max_score for fail-soft negamax
     int32_t best_score = -POSITIVE_INFINITY;
     bool is_root = ply == 0;
+    bool node_is_check = board.inCheck();
 
     // For updating Transposition table later
     int32_t old_alpha = alpha;  
@@ -38,7 +122,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // Handle time management
     // Here is where our hard-bound time mnagement is. When the search time 
     // exceeds our maximum hard bound time limit
-    if (hard_bound_time_exceeded())
+    if (global_depth >= 1 && hard_bound_time_exceeded())
         throw SearchAbort();
 
     // Draw detections
@@ -53,11 +137,6 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     if (board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition())
         return 0;
 
-    // Get the TT Entry for current position
-    TTEntry entry;
-    uint64_t zobrists_key = board.zobrist(); 
-    bool tt_hit = tt.probe(zobrists_key, entry);
-
     // Get all legal moves for our moveloop in our search
     Movelist all_moves;
     movegen::legalmoves(all_moves, board);
@@ -66,7 +145,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // When we are in checkmate during our turn, we lost the game, therefore we 
     // should return a large negative value
     if (all_moves.size() == 0){
-        if (board.inCheck())
+        if (node_is_check)
             return -POSITIVE_MATE_SCORE + ply;
 
         // Stalemate jumpscare!
@@ -77,7 +156,12 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
     // Depth 0 -- we end our search and return eval (haven't started qs yet)
     if (depth == 0)
-        return evaluate(board);
+        return evaluate(board); //q_search(board, alpha, beta, ply);
+
+    // Get the TT Entry for current position
+    TTEntry entry;
+    uint64_t zobrists_key = board.zobrist(); 
+    bool tt_hit = tt.probe(zobrists_key, entry);
 
     // Transposition Table cutoffs
     // Only cut with a greater or equal depth search
@@ -85,7 +169,16 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     if (entry.depth >= depth && !is_root && tt_hit && ((entry.type == NodeType::EXACT) || (entry.type == NodeType::LOWERBOUND && entry.score >= beta) || (entry.type == NodeType::UPPERBOUND && entry.score <= alpha)))
         return entry.score;
 
-    
+    // Static evaluation for pruning metrics
+    int32_t static_eval = evaluate(board);
+
+    // Reverse futility pruning / Static Null Move Pruning
+    // If eval is well above beta, we assume that it will hold
+    // above beta. We "predict" that a beta cutoff will happen
+    // and return eval without searching moves
+    if (!node_is_check && depth <= reverse_futility_depth && static_eval - reverse_futility_margin * depth >= beta)
+        return static_eval;
+
     // Move ordering
     sort_moves(board, all_moves, tt_hit, entry.best_move);
 
@@ -136,7 +229,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 // Uses soft bound time management
 int32_t search_root(Board &board){
     try {
-        while (!soft_bound_time_exceeded()){
+        while (global_depth == 0 || !soft_bound_time_exceeded()){
             // Increment the global depth since global_depth starts from 0
             global_depth++;
             int32_t score = alpha_beta(board, global_depth, DEFAULT_ALPHA, DEFAULT_BETA, 0);
