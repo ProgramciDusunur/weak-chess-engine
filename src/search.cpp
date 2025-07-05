@@ -199,6 +199,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     for (int idx = 0; idx < all_moves.size(); idx++){
 
         int32_t reduction = 0;
+        int32_t extension = 0;
 
         move_count++;
 
@@ -213,7 +214,12 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         // Basic make and undo functionality. Copy-make should be faster but that
         // debugging is for later
         board.makeMove(current_move);
-        int32_t score = -alpha_beta(board, depth - reduction - 1, -beta, -alpha, ply + 1);
+
+        // Check extension, we increase the depth of moves that give check
+        if (board.inCheck())
+            extension++;
+
+        int32_t score = -alpha_beta(board, depth - reduction + extension - 1, -beta, -alpha, ply + 1);
         board.unmakeMove(current_move);
 
         // Updating best_score and alpha beta pruning
