@@ -109,6 +109,8 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     int32_t best_score = -POSITIVE_INFINITY;
     bool is_root = ply == 0;
     bool node_is_check = board.inCheck();
+    // Important for cutoffs
+    bool pv_node = beta - alpha != 1;
 
     // For updating Transposition table later
     int32_t old_alpha = alpha;  
@@ -162,7 +164,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
     // Transposition Table cutoffs
     // Only cut with a greater or equal depth search
-    if (entry.depth >= depth && !is_root && tt_hit && ((entry.type == NodeType::EXACT) || (entry.type == NodeType::LOWERBOUND && entry.score >= beta) || (entry.type == NodeType::UPPERBOUND && entry.score <= alpha)))
+    if (!pv_node && entry.depth >= depth && !is_root && tt_hit && ((entry.type == NodeType::EXACT) || (entry.type == NodeType::LOWERBOUND && entry.score >= beta) || (entry.type == NodeType::UPPERBOUND && entry.score <= alpha)))
         return entry.score;
 
     // Static evaluation for pruning metrics
@@ -172,7 +174,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // If eval is well above beta, we assume that it will hold
     // above beta. We "predict" that a beta cutoff will happen
     // and return eval without searching moves
-    if (!node_is_check && depth <= reverse_futility_depth && static_eval - reverse_futility_margin * depth >= beta)
+    if (!pv_node && !node_is_check && depth <= reverse_futility_depth && static_eval - reverse_futility_margin * depth >= beta)
         return static_eval;
 
     // Null move pruning. Basically, we can assume that making a move 
@@ -180,7 +182,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // except if it's in a zugzwang. Hence, if we skip out turn and
     // we still maintain beta, then we can prune early. Also do not
     // do NMP when tt suggests that it should fail immediately
-    if (!node_is_check && static_eval >= beta && depth >= null_move_depth && (!tt_hit || !(entry.type == NodeType::UPPERBOUND) || entry.score >= beta) && (board.hasNonPawnMaterial(Color::WHITE) || board.hasNonPawnMaterial(Color::BLACK))){
+    if (!pv_node && !node_is_check && static_eval >= beta && depth >= null_move_depth && (!tt_hit || !(entry.type == NodeType::UPPERBOUND) || entry.score >= beta) && (board.hasNonPawnMaterial(Color::WHITE) || board.hasNonPawnMaterial(Color::BLACK))){
         board.makeNullMove();
         int32_t score = -alpha_beta(board, depth - null_move_reduction, -beta, -beta+1, ply + 1);
         board.unmakeNullMove();
@@ -219,7 +221,20 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         if (board.inCheck())
             extension++;
 
-        int32_t score = -alpha_beta(board, depth - reduction + extension - 1, -beta, -alpha, ply + 1);
+        int32_t score = 0;
+
+        // Principle Variation Search
+        if (move_count == 1)
+            score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1);
+        else {
+            score = -alpha_beta(board, depth - reduction + extension - 1, -alpha - 1, -alpha, ply + 1);
+            // Research
+            if (score > alpha && score < beta) {
+                score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1);
+            }
+        }
+
+
         board.unmakeMove(current_move);
 
         // Updating best_score and alpha beta pruning
