@@ -1,85 +1,88 @@
 #pragma once
 
-#include <algorithm>
-#include <vector>
+#include <array>
+#include <cstdint>
+#include <utility>
+#include <cassert>
 
 #include "chess.hpp"
 #include "ordering.hpp"
 #include "transposition.hpp"
 #include "mvv_lva.hpp"
+#include "see.hpp"
 
-// High bonus score for TT move
 constexpr int32_t TT_BONUS = 1000000;
 constexpr int32_t KILLER_BONUS = 90000;
 
-// Sorts moves by giving TT move highest priority, then by MVV-LVA score for captures
 inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_hit, uint16_t tt_move, int32_t ply) {
-    // Pair each move with its score
-    std::vector<std::pair<chess::Move, int32_t>> scored_moves;
+    const size_t move_count = movelist.size();
+    assert(move_count <= 256); 
 
-    for (const auto& move : movelist) {
+    // Score array for corresponding moves
+    std::array<int32_t, 256> scores;
+
+    for (size_t i = 0; i < move_count; ++i) {
+        const auto& move = movelist[i];
         int32_t score = 0;
 
-        // TT move bonus
         if (tt_hit && encode_move(move.from(), move.to(), move.typeOf()) == tt_move) {
-            score += TT_BONUS;
+            score = TT_BONUS;
+        } else if (board.isCapture(move)) {
+            score = mvv_lva(board, move);
+        } else if (killers[0][ply] == move || killers[1][ply] == move) {
+            score = KILLER_BONUS;
+        } else {
+            score = quiet_history[board.sideToMove() == chess::Color::WHITE][move.from().index()][move.to().index()];
         }
 
-        // Don't waste time on mvv-lva when it is already a tt move
-        else if (board.isCapture(move)) {
-            // MVV-LVA score (captures only)
-            score += mvv_lva(board, move);
-        }
-        else {
-            // Killer moves
-            if (killers[0][ply] == move || killers[1][ply] == move){
-                score += KILLER_BONUS;
-            }
-            else {
-                score += quiet_history[board.sideToMove() == chess::Color::WHITE][move.from().index()][move.to().index()];
-            }
-        }
-
-        scored_moves.emplace_back(move, score);
+        scores[i] = score;
     }
 
-    // Sort in descending order of score
-    std::sort(scored_moves.begin(), scored_moves.end(),
-              [](const auto& a, const auto& b) { return a.second > b.second; });
-
-    // Update movelist with sorted moves
-    for (size_t i = 0; i < movelist.size(); ++i) {
-        movelist[i] = scored_moves[i].first;
+    // In-place sort (descending order) using scores
+    for (size_t i = 0; i < move_count; ++i) {
+        size_t max_idx = i;
+        for (size_t j = i + 1; j < move_count; ++j) {
+            if (scores[j] > scores[max_idx]) {
+                max_idx = j;
+            }
+        }
+        if (max_idx != i) {
+            std::swap(scores[i], scores[max_idx]);
+            std::swap(movelist[i], movelist[max_idx]);
+        }
     }
 }
 
 inline void sort_captures(chess::Board& board, chess::Movelist& movelist, bool tt_hit, uint16_t tt_move) {
-    // Pair each move with its score
-    std::vector<std::pair<chess::Move, int32_t>> scored_moves;
+    const size_t move_count = movelist.size();
+    assert(move_count <= 256);
 
-    for (const auto& move : movelist) {
+    std::array<int32_t, 256> scores;
+
+    for (size_t i = 0; i < move_count; ++i) {
+        const auto& move = movelist[i];
         int32_t score = 0;
 
-        // TT move bonus
         if (tt_hit && encode_move(move.from(), move.to(), move.typeOf()) == tt_move) {
-            score += TT_BONUS;
+            score = TT_BONUS;
+        } else {
+            score = mvv_lva(board, move);
         }
 
-        // Don't waste time on mvv-lva when it is already a tt move
-        else {
-            // MVV-LVA score (captures only)
-            score += mvv_lva(board, move);
-        }
-
-        scored_moves.emplace_back(move, score);
+        scores[i] = score;
     }
 
-    // Sort in descending order of score
-    std::sort(scored_moves.begin(), scored_moves.end(),
-              [](const auto& a, const auto& b) { return a.second > b.second; });
-
-    // Update movelist with sorted moves
-    for (size_t i = 0; i < movelist.size(); ++i) {
-        movelist[i] = scored_moves[i].first;
+    // In-place selection sort
+    for (size_t i = 0; i < move_count; ++i) {
+        size_t max_idx = i;
+        for (size_t j = i + 1; j < move_count; ++j) {
+            if (scores[j] > scores[max_idx]) {
+                max_idx = j;
+            }
+        }
+        if (max_idx != i) {
+            std::swap(scores[i], scores[max_idx]);
+            std::swap(movelist[i], movelist[max_idx]);
+        }
     }
 }
