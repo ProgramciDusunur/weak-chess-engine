@@ -10,6 +10,7 @@
 #include "eval.hpp"
 #include "transposition.hpp"
 #include "ordering.hpp"
+#include "see.hpp"
 
 using namespace chess;
 using namespace std;
@@ -55,7 +56,7 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
     int32_t best_score = eval;
     if (alpha > eval) eval = alpha;
     if (alpha >= beta) return eval;
-    
+
     // Get all legal moves for our moveloop in our search
     Movelist capture_moves;
     movegen::legalmoves<movegen::MoveGenType::CAPTURE>(capture_moves, board);
@@ -66,6 +67,9 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
     Move current_best_move;
     for (int idx = 0; idx < capture_moves.size(); idx++){
         Move current_move = capture_moves[idx];
+
+        // QSEE pruning, if a move is obviously losing, don't search it
+        if (!see(board, current_move)) continue;
 
         // Basic make and undo functionality. Copy-make should be faster but that
         // debugging is for later

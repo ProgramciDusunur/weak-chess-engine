@@ -13,7 +13,7 @@ constexpr int32_t DEFAULT_BETA = POSITIVE_INFINITY;
 // Maximum search depth
 constexpr int32_t MAX_SEARCH_DEPTH = 1023;
 
-// Sarch constants
+// Tunables
 constexpr int32_t reverse_futility_margin = 60;
 constexpr int32_t reverse_futility_depth = 8;
 constexpr int32_t null_move_depth = 2;
@@ -25,6 +25,7 @@ constexpr int32_t aspiration_window_depth = 4;
 constexpr int32_t aspiration_window_delta = 40;
 constexpr int32_t maximum_aspiration_window_research = 2;
 constexpr int32_t internal_iterative_deepening_depth = 7;
+constexpr int32_t delta_value = 1100;
 //constexpr int32_t tempo = 10;
 
 // Our custom error

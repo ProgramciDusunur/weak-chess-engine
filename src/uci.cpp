@@ -14,6 +14,7 @@
 #include "eval.hpp"
 #include "search.hpp"
 #include "transposition.hpp"
+#include "see.hpp"
 
 using namespace std;
 using namespace chess;
@@ -95,7 +96,7 @@ void print_board(const Board &board){
         // To format the board to look like a chess board, we need to endline
         // every time a chess row ends, ie after the "h" file
         if (i != 0 && i % 8 == 0)
-            cout << "\n";
+            cout << endl;
 
         string piece_char = ".";
 
@@ -144,7 +145,7 @@ void print_board(const Board &board){
 
         cout << piece_char << " ";
     }
-    cout << "\n";
+    cout << endl;
 }
 
 // Main UCI loop
@@ -306,6 +307,11 @@ int main() {
         else if (words[0] == "time"){
             cout << "info string soft bound " << max_soft_time_ms << "\n";
             cout << "info string hard bound " << max_hard_time_ms << "\n";
+        }
+
+        // Non-standard UCI command for debugging see
+        else if (words[0] == "see"){
+            cout << see(board, uci::uciToMove(board, words[1])) << "\n";
         }
 
         // Mostly for debugging purposes. This is a nonstandard UCI command
