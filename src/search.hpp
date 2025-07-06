@@ -26,6 +26,8 @@ constexpr int32_t aspiration_window_delta = 40;
 constexpr int32_t maximum_aspiration_window_research = 2;
 constexpr int32_t internal_iterative_deepening_depth = 7;
 constexpr int32_t delta_value = 1100;
+constexpr int32_t see_noisy_margin = -95;
+constexpr int32_t see_quiet_margin = -60;
 //constexpr int32_t tempo = 10;
 
 // Our custom error

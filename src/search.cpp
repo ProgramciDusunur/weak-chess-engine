@@ -69,7 +69,7 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
         Move current_move = capture_moves[idx];
 
         // QSEE pruning, if a move is obviously losing, don't search it
-        if (!see(board, current_move)) continue;
+        if (!see(board, current_move, 0)) continue;
 
         // Basic make and undo functionality. Copy-make should be faster but that
         // debugging is for later
@@ -230,8 +230,13 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         // Quiet late moves reduction - we have to trust that our
         // move ordering is good enough most of the time to order
         // best moves at the start
-        if (!board.isCapture(current_move) && depth >= late_move_reduction_depth)
+        if (!is_noisy_move && depth >= late_move_reduction_depth)
             reduction += (int32_t)(((double)late_move_reduction_base / 100) + (((double)late_move_reduction_multiplier * log(depth) * log(move_count)) / 100));
+
+        // Static Exchange Evaluation Pruning
+        int see_margin = !is_noisy_move ? depth * see_quiet_margin : depth * see_noisy_margin;
+        if (!pv_node && !see(board, current_move, see_margin))
+            continue;
 
         // Basic make and undo functionality. Copy-make should be faster but that
         // debugging is for later

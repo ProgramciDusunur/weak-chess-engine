@@ -311,7 +311,7 @@ int main() {
 
         // Non-standard UCI command for debugging see
         else if (words[0] == "see"){
-            cout << see(board, uci::uciToMove(board, words[1])) << "\n";
+            cout << see(board, uci::uciToMove(board, words[1]), 0) << "\n";
         }
 
         // Mostly for debugging purposes. This is a nonstandard UCI command

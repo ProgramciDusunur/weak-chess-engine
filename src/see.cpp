@@ -40,7 +40,7 @@ Bitboard all_attackers_to_square(Board &board, Bitboard occ, Square sq){
 
 // Static Exchange Evluation
 // https://github.com/AndyGrant/Ethereal/blob/0e47e9b67f345c75eb965d9fb3e2493b6a11d09a/src/search.c#L929
-bool see(Board board, Move move){
+bool see(Board board, Move move, int32_t threshold){
     int32_t balance, from, to, next_victim;
     uint16_t type;
     Color turn = board.sideToMove();
@@ -52,7 +52,9 @@ bool see(Board board, Move move){
 
     next_victim = type != Move::PROMOTION ? static_cast<int32_t>(board.at(static_cast<Square>(from)).type()) : static_cast<int32_t>(move.promotionType());
     
-    balance = move_estimated_value(board, move);
+    balance = move_estimated_value(board, move) - threshold;
+
+    if (balance < 0) return false;
 
     // Worst case is losing the moved piece
     balance -= see_piece_values[next_victim];
