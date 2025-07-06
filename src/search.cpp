@@ -254,6 +254,11 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
             score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1);
         else {
             score = -alpha_beta(board, depth - reduction + extension - 1, -alpha - 1, -alpha, ply + 1);
+
+            // Triple PVS
+            if (reduction > 0 && score > alpha)
+                score = -alpha_beta(board, depth + extension - 1, -alpha - 1, -alpha, ply + 1);
+
             // Research
             if (score > alpha && score < beta) {
                 score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1);
