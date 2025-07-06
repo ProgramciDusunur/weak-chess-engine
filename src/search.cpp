@@ -51,7 +51,7 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
     // Eval pruning - If a static evaluation of the board will
     // exceed beta, then we can stop the search here. Also, if the static
     // eval exceeds alpha, we can call our static eval the new alpha (comment from Ethereal)
-    int32_t eval = (int32_t)evaluate(board);
+    int32_t eval = evaluate(board);
     int32_t best_score = eval;
     if (alpha > eval) eval = alpha;
     if (alpha >= beta) return eval;
@@ -170,6 +170,12 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     if (!pv_node && entry.depth >= depth && !is_root && tt_hit && ((entry.type == NodeType::EXACT) || (entry.type == NodeType::LOWERBOUND && entry.score >= beta) || (entry.type == NodeType::UPPERBOUND && entry.score <= alpha)))
         return entry.score;
 
+    // Internal iterative reduction. Artifically lower the depth on pv nodes / cutnodes
+    // that are high enough up in the search tree that we would expect to have found
+    // a Transposition. (Comment from Ethereal)
+    if (pv_node && depth >= internal_iterative_deepening_depth && entry.best_move == 0)
+        depth--;
+
     // Static evaluation for pruning metrics
     int32_t static_eval = evaluate(board);
 
@@ -198,7 +204,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     sort_moves(board, all_moves, tt_hit, entry.best_move, ply);
 
     // Main move loop
-    // For loop is faster tha foreach :)
+    // For loop is faster than foreach :)
     Move current_best_move;
     int32_t move_count = 0;
 

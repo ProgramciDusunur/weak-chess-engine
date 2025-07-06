@@ -3,11 +3,12 @@
 #include "chess.hpp"
 #include "packing.hpp"
 #include "eval.hpp"
+#include "search.hpp"
 
 using namespace chess;
 using namespace std;
 
-inline const int32_t PSQT[6][64] = {
+const int32_t PSQT[6][64] = {
     {
         S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
         S(180, 272), S(216, 267), S(143, 252), S(177, 228), S(150, 241), S(208, 226), S(116, 259), S(71, 281),
@@ -71,7 +72,7 @@ inline const int32_t PSQT[6][64] = {
 };
 
 // For a tapered evaluation
-inline const int32_t game_phase_increment[6] = {0, 1, 1, 2, 4, 0};
+const int32_t game_phase_increment[6] = {0, 1, 1, 2, 4, 0};
 
 // This is our HCE evaluation function. 
 int32_t evaluate(const chess::Board& board) {
@@ -121,6 +122,6 @@ int32_t evaluate(const chess::Board& board) {
 
 
     // Evaluation tapering, that is, interpolating mg and eg values depending on how many pieces
-    // there are on the board. See here for more information: 
+    // there are on the board. See here for more information: https://www.chessprogramming.org/Tapered_Eval
     return (mg_score * mg_phase + eg_score * eg_phase) / 24;
 }

@@ -24,6 +24,8 @@ constexpr int32_t late_move_reduction_multiplier = 40;
 constexpr int32_t aspiration_window_depth = 4;
 constexpr int32_t aspiration_window_delta = 40;
 constexpr int32_t maximum_aspiration_window_research = 2;
+constexpr int32_t internal_iterative_deepening_depth = 7;
+//constexpr int32_t tempo = 10;
 
 // Our custom error
 struct SearchAbort : public std::exception {
