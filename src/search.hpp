@@ -6,6 +6,7 @@
 
 // For mate scoring and default value form max_score
 constexpr int32_t POSITIVE_MATE_SCORE = 50000;
+constexpr int32_t POSITIVE_WIN_SCORE = 45000;
 constexpr int32_t POSITIVE_INFINITY = 100000;
 constexpr int32_t DEFAULT_ALPHA = -POSITIVE_INFINITY;
 constexpr int32_t DEFAULT_BETA = POSITIVE_INFINITY;
@@ -22,8 +23,8 @@ constexpr int32_t late_move_reduction_depth = 3;
 constexpr int32_t late_move_reduction_base = 75;
 constexpr int32_t late_move_reduction_multiplier = 40;
 constexpr int32_t aspiration_window_depth = 4;
-constexpr int32_t aspiration_window_delta = 40;
-constexpr int32_t maximum_aspiration_window_research = 2;
+constexpr int32_t aspiration_window_delta = 10;
+constexpr int32_t aspiration_widening_factor = 30;
 constexpr int32_t internal_iterative_deepening_depth = 7;
 constexpr int32_t delta_value = 1100;
 constexpr int32_t see_noisy_margin = -95;

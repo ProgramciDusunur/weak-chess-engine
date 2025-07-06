@@ -98,7 +98,7 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
     uint16_t best_move_tt = bound == NodeType::UPPERBOUND ? 0 : encode_move(current_best_move.from(), current_best_move.to(), current_best_move.typeOf());
 
     // Storing transpositions
-    tt.store(zobrists_key, best_score, 0, bound, best_move_tt);
+    tt.store(zobrists_key, clamp(best_score, -40000, 40000), 0, bound, best_move_tt);
 
     return best_score;
 }
@@ -117,7 +117,8 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     bool is_root = ply == 0;
     bool node_is_check = board.inCheck();
     // Important for cutoffs
-    bool pv_node = beta - alpha != 1;
+    // I'm aware this is not the best way to do it but that's for later
+    bool pv_node = beta - alpha > 1;
 
     // For updating Transposition table later
     int32_t old_alpha = alpha;  
@@ -235,7 +236,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
         // Static Exchange Evaluation Pruning
         int see_margin = !is_noisy_move ? depth * see_quiet_margin : depth * see_noisy_margin;
-        if (!pv_node && !see(board, current_move, see_margin))
+        if (!pv_node && !see(board, current_move, see_margin) && alpha < POSITIVE_WIN_SCORE)
             continue;
 
         // Basic make and undo functionality. Copy-make should be faster but that
@@ -276,7 +277,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                 alpha = score;
 
                 // Alpha-Beta Pruning
-                if (alpha >= beta){
+                if (score >= beta){
 
                     // Quiet move heuristics
                     if (!is_noisy_move){
@@ -288,7 +289,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                             killers[0][ply] = current_move;
                         }
 
-                        // History Heuristic
+                        // History Heuristic + gravity
                         bool turn = board.sideToMove() == chess::Color::WHITE;
                         int32_t from = current_move.from().index();
                         int32_t to = current_move.to().index();
@@ -306,7 +307,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     uint16_t best_move_tt = bound == NodeType::UPPERBOUND ? 0 : encode_move(current_best_move.from(), current_best_move.to(), current_best_move.typeOf());
 
     // Storing transpositions
-    tt.store(zobrists_key, best_score, depth, bound, best_move_tt);
+    tt.store(zobrists_key, clamp(best_score, -40000, 40000), depth, bound, best_move_tt);
 
     return best_score;
 
@@ -320,14 +321,12 @@ int32_t search_root(Board &board){
         // Aspiration window search, we predict that the score from previous searches will be
         // around the same as the next depth +/- some margin.
         int32_t score = 0;
-        global_depth = 0;
+        int32_t delta = aspiration_window_delta;
+        int32_t alpha = DEFAULT_ALPHA;
+        int32_t beta = DEFAULT_BETA;
         while ((global_depth == 0 || !soft_bound_time_exceeded()) && global_depth < MAX_SEARCH_DEPTH){
             // Increment the global depth since global_depth starts from 0
             global_depth++;
-
-            int32_t alpha = DEFAULT_ALPHA;
-            int32_t beta = DEFAULT_BETA;
-            int32_t delta = aspiration_window_delta;
             int32_t researches = 0;
             int32_t new_score = 0;
 
@@ -336,15 +335,16 @@ int32_t search_root(Board &board){
                 beta = min(POSITIVE_INFINITY, score + delta);
             }
             while (true){
+                
                 new_score = alpha_beta(board, global_depth, alpha, beta, 0);
                 int64_t elapsed_time = elapsed_ms();
 
-                if (score <= alpha){
+                if (new_score <= alpha){
                     cout << "info depth " << global_depth << " time " << elapsed_time << " score cp " << alpha << " upperbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
                     beta = (alpha + beta) / 2;
                     alpha = max(-POSITIVE_INFINITY, new_score - delta);
                 }
-                else if (score >= beta){
+                else if (new_score >= beta){
                     cout << "info depth " << global_depth << " time " << elapsed_time << " score cp " << beta << " lowerbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
                     beta = min(POSITIVE_INFINITY, new_score + delta);
                 }
@@ -353,14 +353,10 @@ int32_t search_root(Board &board){
                     break;
                 }
 
-                // If we exceed our time management, we stop widening and so one last search
-                if (soft_bound_time_exceeded() || researches >= maximum_aspiration_window_research){
-                    delta = POSITIVE_INFINITY;
-                }
-                else {
-                    researches++;
-                    delta += delta / 2;
-                }
+                // If we exceed our time management, we stop widening 
+                if (soft_bound_time_exceeded())
+                    break;
+                else delta += delta * aspiration_widening_factor / 100;
             }
 
             score = new_score;
@@ -377,3 +373,4 @@ int32_t search_root(Board &board){
 
     return 0;
 }
+

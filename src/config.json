@@ -57,7 +57,7 @@
     },
     "config_name": "config.json",
     "output": 0,
-    "seed": 11174828975769682564,
+    "seed": 16783903740873556960,
     "variant": 0,
     "ratinginterval": 10,
     "scoreinterval": 1,
@@ -123,26 +123,26 @@
     ],
     "stats": {
         "Weak vs WeakDev": {
-            "wins": 294,
-            "losses": 391,
-            "draws": 341,
-            "penta_WW": 42,
-            "penta_WD": 105,
-            "penta_WL": 105,
-            "penta_DD": 50,
-            "penta_LD": 136,
-            "penta_LL": 75
+            "wins": 1731,
+            "losses": 1978,
+            "draws": 1867,
+            "penta_WW": 260,
+            "penta_WD": 547,
+            "penta_WL": 664,
+            "penta_DD": 343,
+            "penta_LD": 634,
+            "penta_LL": 340
         },
         "WeakDev vs Weak": {
-            "wins": 340,
-            "losses": 257,
-            "draws": 291,
-            "penta_WW": 57,
-            "penta_WD": 125,
-            "penta_WL": 101,
-            "penta_DD": 39,
-            "penta_LD": 88,
-            "penta_LL": 34
+            "wins": 1807,
+            "losses": 1824,
+            "draws": 1679,
+            "penta_WW": 303,
+            "penta_WD": 560,
+            "penta_WL": 641,
+            "penta_DD": 288,
+            "penta_LD": 543,
+            "penta_LL": 320
         }
     }
 }
