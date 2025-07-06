@@ -213,6 +213,10 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     Move current_best_move;
     int32_t move_count = 0;
 
+    // Store quiets searched for history malus
+    Move quiets_searched[1024]{};
+    int32_t quiets_searched_idx = 0;
+
     // Clear killers of next ply
     killers[0][ply+1] = Move{}; 
     killers[1][ply+1] = Move{}; 
@@ -246,6 +250,8 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         // Check extension, we increase the depth of moves that give check
         if (board.inCheck())
             extension++;
+
+        quiets_searched[quiets_searched_idx++] = current_move;
 
         int32_t score = 0;
 
@@ -299,8 +305,16 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                         int32_t from = current_move.from().index();
                         int32_t to = current_move.to().index();
 
-                        int32_t bonus = clamp(depth * depth, -MAX_HISTORY, MAX_HISTORY);
+                        int32_t bonus = clamp(history_bonus_mul_quad * depth * depth + history_bonus_mul_linear * depth + history_bonus_base, -MAX_HISTORY, MAX_HISTORY);
                         quiet_history[turn][from][to] += bonus - quiet_history[turn][from][to] * abs(bonus) / MAX_HISTORY;
+
+                        // History Malus
+                        for (int32_t i = 0; i < quiets_searched_idx; i++){
+                            Move quiet = quiets_searched[i];
+                            from = quiet.from().index();
+                            to = quiet.to().index();
+                            quiet_history[turn][from][to] -= history_malus_mul_quad * depth * depth + history_malus_mul_linear * depth + history_bonus_base;
+                        }
                     }
                     break;
                 }

@@ -29,6 +29,12 @@ constexpr int32_t internal_iterative_deepening_depth = 7;
 constexpr int32_t delta_value = 1100;
 constexpr int32_t see_noisy_margin = -95;
 constexpr int32_t see_quiet_margin = -60;
+constexpr int32_t history_bonus_base = 150;
+constexpr int32_t history_bonus_mul_linear = 200;
+constexpr int32_t history_bonus_mul_quad = 500;
+constexpr int32_t history_malus_base = 50;
+constexpr int32_t history_malus_mul_linear = 280;
+constexpr int32_t history_malus_mul_quad = 300;
 //constexpr int32_t tempo = 10;
 
 // Our custom error
