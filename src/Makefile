@@ -1,17 +1,18 @@
-# Default output executable name
-EXE ?= weak.exe
+# Default output name
+EXE ?= weak
+ifeq ($(OS),Windows_NT)
+	EXE := $(EXE).exe
+endif
 
 # Compiler and flags
 CXX := g++
-CXXFLAGS := -O3
+CXXFLAGS := -O3 -march=native
+# Or safer alternative: -O3 -march=haswell
 
-# Source files (all .cpp in current directory)
 SOURCES := $(wildcard *.cpp)
 
-# Build target
 all:
 	$(CXX) $(CXXFLAGS) $(SOURCES) -o $(EXE)
 
-# Clean target
 clean:
-	rm -f *.o *.exe Engine-* weak.exe
+	rm -f *.o *.exe Engine-* weak
