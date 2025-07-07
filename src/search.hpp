@@ -35,6 +35,9 @@ constexpr int32_t history_bonus_mul_quad = 500;
 constexpr int32_t history_malus_base = 50;
 constexpr int32_t history_malus_mul_linear = 280;
 constexpr int32_t history_malus_mul_quad = 300;
+//constexpr int32_t prob_cut_min_depth = 5;
+//constexpr int32_t probcut_beta_margin = 5;
+//constexpr int32_t probcut_reduction = 4;
 //constexpr int32_t tempo = 10;
 
 // Our custom error

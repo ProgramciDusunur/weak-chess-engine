@@ -34,7 +34,7 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
         throw SearchAbort();
 
     // Draw detections
-    if ((board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition()))
+    if ((board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition(1)))
         return 0;
 
     // Get the TT Entry for current position
@@ -141,7 +141,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // avoid draws more or like drawn positions. This surely weakens the
     // engine when playing against another at the same level. But it is
     // irrelevant in our case.
-    if (!is_root && (board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition()))
+    if (!is_root && (board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition(1)))
         return 0;
 
     // Get all legal moves for our moveloop in our search
@@ -175,14 +175,9 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     if (!pv_node && entry.depth >= depth && !is_root && tt_hit && ((entry.type == NodeType::EXACT) || (entry.type == NodeType::LOWERBOUND && entry.score >= beta) || (entry.type == NodeType::UPPERBOUND && entry.score <= alpha)))
         return entry.score;
 
-    // Internal iterative reduction. Artifically lower the depth on pv nodes / cutnodes
-    // that are high enough up in the search tree that we would expect to have found
-    // a Transposition. (Comment from Ethereal)
-    if (pv_node && depth >= internal_iterative_deepening_depth && entry.best_move == 0)
-        depth--;
-
     // Static evaluation for pruning metrics
     int32_t static_eval = evaluate(board);
+
 
     // Reverse futility pruning / Static Null Move Pruning
     // If eval is well above beta, we assume that it will hold
@@ -205,8 +200,11 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
             return score;
     }
 
-    // Move ordering
-    sort_moves(board, all_moves, tt_hit, entry.best_move, ply);
+    // Internal iterative reduction. Artifically lower the depth on pv nodes / cutnodes
+    // that are high enough up in the search tree that we would expect to have found
+    // a Transposition. (Comment from Ethereal)
+    if (pv_node && depth >= internal_iterative_deepening_depth && entry.best_move == 0)
+        depth--;
 
     // Main move loop
     // For loop is faster than foreach :)
@@ -220,6 +218,8 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // Clear killers of next ply
     killers[0][ply+1] = Move{}; 
     killers[1][ply+1] = Move{}; 
+
+    sort_moves(board, all_moves, tt_hit, entry.best_move, ply);
 
     for (int idx = 0; idx < all_moves.size(); idx++){
 
