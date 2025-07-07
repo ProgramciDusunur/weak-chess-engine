@@ -178,13 +178,20 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // Static evaluation for pruning metrics
     int32_t static_eval = evaluate(board);
 
-
     // Reverse futility pruning / Static Null Move Pruning
     // If eval is well above beta, we assume that it will hold
     // above beta. We "predict" that a beta cutoff will happen
     // and return eval without searching moves
     if (!pv_node && !node_is_check && depth <= reverse_futility_depth && static_eval - reverse_futility_margin * depth >= beta)
         return static_eval;
+
+    // Razoring / Alpha pruning
+    // For low depths, if the eval is so bad that a large margin scaled
+    // with depth is still not able to raise alpha, we can be almost sure 
+    // that it will not be able to in the next few depths
+    // https://github.com/official-stockfish/Stockfish/blob/ce73441f2013e0b8fd3eb7a0c9fd391d52adde70/src/search.cpp#L833
+    if (!pv_node && !node_is_check && depth <= razoring_max_depth && static_eval + razoring_base + razoring_linear_mul * depth + razoring_quad_mul * depth * depth <= alpha)
+        return q_search(board, alpha, beta, ply + 1);
 
     // Null move pruning. Basically, we can assume that making a move 
     // is always better than not making our move most of the time
