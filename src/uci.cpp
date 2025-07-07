@@ -15,6 +15,8 @@
 #include "search.hpp"
 #include "transposition.hpp"
 #include "see.hpp"
+#include "defaults.hpp"
+#include "bench.hpp"
 
 using namespace std;
 using namespace chess;
@@ -149,7 +151,19 @@ void print_board(const Board &board){
 }
 
 // Main UCI loop
-int main() {
+int32_t main(int32_t argc, char* argv[]) {
+
+    if (argc > 1) {
+        string command = argv[1];
+        if (command == "bench") {
+            bench(BENCH_DEPTH);
+        } else {
+            std::cout << "Unknown command: " << command << "\n";
+        }
+    } else {
+        std::cout << "Usage: " << argv[0] << " <command>\n";
+        std::cout << "Available commands: bench\n";
+    }
 
     string input;
     
@@ -175,6 +189,8 @@ int main() {
         if (words[0] == "uci"){
             cout << "id name " << ENGINE_NAME << "-" << ENGINE_VERSION << "\n";
             cout << "id author " << ENGINE_AUTHOR << "\n";
+            tt_size.print_uci_option();
+            threads.print_uci_option();
             cout << "uciok\n";
         }
 
@@ -283,6 +299,14 @@ int main() {
             search_root(board);
         }
 
+        // Engine Options
+        // "setoption name <option> value <value>"
+        else if (words[0] == "setoption"){
+            if (words[2] == tt_size.name){
+                tt.resize(stoi(words[4]));
+            }
+        }
+
         // Non-standard UCI command. Gets the engine to search at exactly
         // the specified depth -- ie. No iterative deepening. Commands
         // should look like search <depth>
@@ -291,8 +315,8 @@ int main() {
             total_nodes = 0;
             max_hard_time_ms = 10000000000;
             max_soft_time_ms = 10000000000;
-            int16_t depth = stoi(words[1]);
-            int16_t score = alpha_beta(board, depth, DEFAULT_ALPHA, DEFAULT_BETA, 0);
+            int32_t depth = stoi(words[1]);
+            int32_t score = alpha_beta(board, depth, DEFAULT_ALPHA, DEFAULT_BETA, 0);
             cout << "info score cp " << score << "\n";
             cout << "bestmove " << uci::moveToUci(root_best_move) << "\n"; 
         }

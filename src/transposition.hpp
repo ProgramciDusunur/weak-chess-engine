@@ -38,6 +38,12 @@ public:
         std::fill(table.begin(), table.end(), TTEntry{});
     }
 
+    void resize(size_t mb) {
+        size = (mb * 1024 * 1024) / sizeof(TTEntry);
+        table.clear();
+        table.resize(size);
+    }
+
     void store(uint64_t key, int score, int depth, NodeType type, uint16_t bestMove) {
         size_t index = key % size;
         TTEntry& entry = table[index];
