@@ -1,20 +1,22 @@
-# Default output executable name (auto .exe on Windows)
+# Default base name for output binary
 EXE ?= weak
+
+# Append .exe on Windows only
 ifeq ($(OS),Windows_NT)
 	EXE := $(EXE).exe
 endif
 
-# Compiler and flags
+# Compiler and optimization flags
 CXX := g++
 CXXFLAGS := -O3
 
-# Source files
+# All .cpp files in the current directory
 SOURCES := $(wildcard *.cpp)
 
-# Build target
+# Default build target
 all:
 	$(CXX) $(CXXFLAGS) $(SOURCES) -o $(EXE)
 
-# Clean target
+# Clean up binaries
 clean:
 	rm -f *.o *.exe Engine-* weak
