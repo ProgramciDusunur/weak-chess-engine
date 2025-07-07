@@ -123,5 +123,5 @@ int32_t evaluate(const chess::Board& board) {
 
     // Evaluation tapering, that is, interpolating mg and eg values depending on how many pieces
     // there are on the board. See here for more information: https://www.chessprogramming.org/Tapered_Eval
-    return (mg_score * mg_phase + eg_score * eg_phase) / 24;
+    return tempo + ((mg_score * mg_phase + eg_score * eg_phase) / 24);
 }

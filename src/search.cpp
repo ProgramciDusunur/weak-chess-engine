@@ -399,4 +399,3 @@ int32_t search_root(Board &board){
 
     return 0;
 }
-

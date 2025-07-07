@@ -39,10 +39,14 @@ constexpr int32_t razoring_max_depth = 3;
 constexpr int32_t razoring_base = 500;
 constexpr int32_t razoring_linear_mul = 0;
 constexpr int32_t razoring_quad_mul = 300;
+constexpr int32_t max_history_pruning_depth = 7;
+//constexpr int32_t history_reduction_quad_margin = 2000;
+//constexpr int32_t history_reduction_linear_margin = 0;
+//constexpr int32_t history_reduction_base = 0;
 //constexpr int32_t prob_cut_min_depth = 5;
 //constexpr int32_t probcut_beta_margin = 5;
 //constexpr int32_t probcut_reduction = 4;
-//constexpr int32_t tempo = 10;
+constexpr int32_t tempo = 5;
 
 // Our custom error
 struct SearchAbort : public std::exception {
