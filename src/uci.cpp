@@ -160,10 +160,7 @@ int32_t main(int32_t argc, char* argv[]) {
         } else {
             std::cout << "Unknown command: " << command << "\n";
         }
-    } else {
-        std::cout << "Usage: " << argv[0] << " <command>\n";
-        std::cout << "Available commands: bench\n";
-    }
+    } 
 
     string input;
     

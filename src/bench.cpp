@@ -73,5 +73,5 @@ void bench(int32_t depth){
         alpha_beta(board, depth, DEFAULT_ALPHA, DEFAULT_BETA, 0);
         node_count += total_nodes;
     }
-    cout << node_count << " nodes " <<  (1000 * node_count) / (elapsed_ms() + 1)  << " nps";
+    cout << node_count << " nodes " <<  (1000 * node_count) / (elapsed_ms() + 1)  << " nps" << endl;
 }
