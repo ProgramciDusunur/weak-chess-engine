@@ -157,9 +157,8 @@ int32_t main(int32_t argc, char* argv[]) {
         string command = argv[1];
         if (command == "bench") {
             bench(BENCH_DEPTH);
-        } else {
-            std::cout << "Unknown command: " << command << "\n";
-        }
+            return 0;
+        } 
     } 
 
     string input;
