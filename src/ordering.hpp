@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <utility>
 #include <cassert>
+#include <algorithm>
 
 #include "chess.hpp"
 #include "ordering.hpp"
@@ -16,10 +17,10 @@ constexpr int32_t KILLER_BONUS = 90000;
 
 inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_hit, uint16_t tt_move, int32_t ply) {
     const size_t move_count = movelist.size();
-    assert(move_count <= 256); 
+    assert(move_count <= 256);
 
-    // Score array for corresponding moves
-    std::array<int32_t, 256> scores;
+    // Pair each move with a score
+    std::array<std::pair<chess::Move, int32_t>, 256> scored_moves;
 
     for (size_t i = 0; i < move_count; i++) {
         const auto& move = movelist[i];
@@ -35,21 +36,18 @@ inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_h
             score = quiet_history[board.sideToMove() == chess::Color::WHITE][move.from().index()][move.to().index()];
         }
 
-        scores[i] = score;
+        scored_moves[i] = {move, score};
     }
 
-    // In-place sort (descending order) using scores
+    // Sort by score descending, stable
+    std::stable_sort(scored_moves.begin(), scored_moves.begin() + move_count,
+        [](const auto& a, const auto& b) {
+            return a.second > b.second;
+        });
+
+    // Write sorted moves back into movelist
     for (size_t i = 0; i < move_count; i++) {
-        size_t max_idx = i;
-        for (size_t j = i + 1; j < move_count; j++) {
-            if (scores[j] > scores[max_idx]) {
-                max_idx = j;
-            }
-        }
-        if (max_idx != i) {
-            std::swap(scores[i], scores[max_idx]);
-            std::swap(movelist[i], movelist[max_idx]);
-        }
+        movelist[i] = scored_moves[i].first;
     }
 }
 
@@ -57,32 +55,23 @@ inline void sort_captures(chess::Board& board, chess::Movelist& movelist, bool t
     const size_t move_count = movelist.size();
     assert(move_count <= 256);
 
-    std::array<int32_t, 256> scores;
+    std::array<std::pair<chess::Move, int32_t>, 256> scored_moves;
 
     for (size_t i = 0; i < move_count; i++) {
         const auto& move = movelist[i];
-        int32_t score = 0;
+        int32_t score = (tt_hit && move.move() == tt_move)
+            ? TT_BONUS
+            : mvv_lva(board, move);
 
-        if (tt_hit && move.move() == tt_move) {
-            score = TT_BONUS;
-        } else {
-            score = mvv_lva(board, move);
-        }
-
-        scores[i] = score;
+        scored_moves[i] = {move, score};
     }
 
-    // In-place selection sort
+    std::stable_sort(scored_moves.begin(), scored_moves.begin() + move_count,
+        [](const auto& a, const auto& b) {
+            return a.second > b.second;
+        });
+
     for (size_t i = 0; i < move_count; i++) {
-        size_t max_idx = i;
-        for (size_t j = i + 1; j < move_count; j++) {
-            if (scores[j] > scores[max_idx]) {
-                max_idx = j;
-            }
-        }
-        if (max_idx != i) {
-            std::swap(scores[i], scores[max_idx]);
-            std::swap(movelist[i], movelist[max_idx]);
-        }
+        movelist[i] = scored_moves[i].first;
     }
 }
