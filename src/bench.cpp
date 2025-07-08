@@ -64,12 +64,12 @@ const string bench_positions[] = {
 };
 
 void bench(int32_t depth){
-    int32_t node_count = 0;
+    int64_t node_count = 0ll;
     search_start_time = chrono::system_clock::now();
     for (int32_t i = 0; i < 50; i++){
         string fen = bench_positions[i];
         Board board = Board(fen);
-        total_nodes = 0;
+        total_nodes = 0ull;
         max_hard_time_ms = 10000000000ll;
         max_soft_time_ms = 10000000000ll;
         alpha_beta(board, depth, DEFAULT_ALPHA, DEFAULT_BETA, 0);

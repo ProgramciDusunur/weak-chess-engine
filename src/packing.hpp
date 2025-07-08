@@ -3,7 +3,7 @@
 
 // Packs two 16-bit scores (midgame, endgame) into a single 32-bit integer.
 inline constexpr int32_t S(int16_t mg, int16_t eg) {
-    return ((int32_t) eg << 16) + (int32_t) mg;
+    return (static_cast<uint32_t>(static_cast<uint16_t>(eg)) << 16) | (static_cast<uint16_t>(mg));
 }
 
 // Extracts the midgame component from packed eval.

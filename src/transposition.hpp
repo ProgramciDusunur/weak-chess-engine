@@ -17,7 +17,7 @@ enum class NodeType : uint8_t {
 // Single TT Entry
 struct TTEntry {
     uint64_t key = 0; // Zobrist hash
-    int16_t score = 0; // Score 
+    int32_t score = 0; // Score 
     int8_t depth = -1; // Depth
     NodeType type = NodeType::EXACT;
     uint16_t best_move = 0; // Encoded move
