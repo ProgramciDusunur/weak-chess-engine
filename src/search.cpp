@@ -43,8 +43,8 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
     bool tt_hit = tt.probe(zobrists_key, entry);
 
     // Transposition Table cutoffs
-    if (tt_hit && ((entry.type == NodeType::EXACT) || (entry.type == NodeType::LOWERBOUND && entry.score >= beta) || (entry.type == NodeType::UPPERBOUND && entry.score <= alpha)))
-        return entry.score;
+    //if (tt_hit && ((entry.type == NodeType::EXACT) || (entry.type == NodeType::LOWERBOUND && entry.score >= beta) || (entry.type == NodeType::UPPERBOUND && entry.score <= alpha)))
+      //  return entry.score;
         
     // For TT updating later to determine bound
     int32_t old_alpha = alpha;
@@ -172,8 +172,8 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
     // Transposition Table cutoffs
     // Only cut with a greater or equal depth search
-    if (!pv_node && entry.depth >= depth && !is_root && tt_hit && ((entry.type == NodeType::EXACT) || (entry.type == NodeType::LOWERBOUND && entry.score >= beta) || (entry.type == NodeType::UPPERBOUND && entry.score <= alpha)))
-        return entry.score;
+    //if (!pv_node && entry.depth >= depth && !is_root && tt_hit && ((entry.type == NodeType::EXACT) || (entry.type == NodeType::LOWERBOUND && entry.score >= beta) || (entry.type == NodeType::UPPERBOUND && entry.score <= alpha)))
+      //  return entry.score;
 
     // Static evaluation for pruning metrics
     int32_t static_eval = evaluate(board);
@@ -229,6 +229,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     sort_moves(board, all_moves, tt_hit, entry.best_move, ply);
 
     for (int idx = 0; idx < all_moves.size(); idx++){
+
         int32_t reduction = 0;
         int32_t extension = 0;
         
@@ -241,8 +242,8 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         // Quiet late moves reduction - we have to trust that our
         // move ordering is good enough most of the time to order
         // best moves at the start
-        //if (!is_noisy_move && depth >= late_move_reduction_depth)
-          //  reduction += (int32_t)(((double)late_move_reduction_base / 100) + (((double)late_move_reduction_multiplier * log(depth) * log(move_count)) / 100));
+        if (!is_noisy_move && depth >= late_move_reduction_depth)
+            reduction += (int32_t)(((double)late_move_reduction_base / 100) + (((double)late_move_reduction_multiplier * log(depth) * log(move_count)) / 100));
 
         // Static Exchange Evaluation Pruning
         int32_t see_margin = !is_noisy_move ? depth * see_quiet_margin : depth * see_noisy_margin;
