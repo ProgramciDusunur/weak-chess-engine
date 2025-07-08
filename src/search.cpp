@@ -251,7 +251,11 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
             // Late Move Pruning
             if (move_count >= 4 + 3 * depth * depth) {
                 continue;
-            }        
+            }
+            // Futility Pruning
+            if (depth < 5 && !pv_node && !node_is_check && (static_eval + 100) + 100 * depth <= alpha) {
+                continue;
+            }
         }
 
         // Quiet late moves reduction - we have to trust that our
