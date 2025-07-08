@@ -303,7 +303,6 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
             }
         }
 
-
         board.unmakeMove(current_move);
 
         // Updating best_score and alpha beta pruning
