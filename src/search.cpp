@@ -246,7 +246,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
         bool is_noisy_move = board.isCapture(current_move);
 
-        int32_t move_history = !is_noisy_move ? quiet_history[board.sideToMove()][current_move.from().index()][current_move.to().index()] : 0;
+        int32_t move_history = !is_noisy_move ? quiet_history[board.sideToMove() == chess::Color::WHITE][current_move.from().index()][current_move.to().index()] : 0;
 
         // Quiet Move Prunings
         if (!is_root && !is_noisy_move && best_score > -POSITIVE_WIN_SCORE) {
