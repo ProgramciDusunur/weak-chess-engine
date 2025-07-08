@@ -161,7 +161,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         }
     }
 
-    // Depth <= 0 (because we allow depth to drop below 0) -- we end our search and return eval (haven't started qs yet)
+    // Depth <= 0 (because we allow depth to drop below 0) - we end our search and return eval (haven't started qs yet)
     if (depth <= 0)
         return q_search(board, alpha, beta, ply);
 
