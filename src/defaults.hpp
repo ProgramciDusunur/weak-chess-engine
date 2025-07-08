@@ -48,6 +48,24 @@ inline void print_all_uci_options() {
         param->print_uci_option();
 }
 
+// Prints the OpenBench SPSA config
+inline void printOpenBenchConfig()
+{
+    for (const auto& param : all_params)
+    {
+        if (param->name == "Threads" || param->name == "Hash" || param->name == "NullMoveDepth" || param->name == "LateMoveReductionDepth" || param->name == "AspirationWindowDepth") // Skip tt_size and threads and others
+            continue;
+
+        std::cout << param->name << ", int, "
+                  << param->current << ", "
+                  << param->min << ", "
+                  << param->max << ", "
+                  << param->step << ", "
+                  << "0.002" << std::endl;
+    }
+}
+
+
 extern SearchParam tt_size;
 extern SearchParam threads;
 extern SearchParam reverse_futility_margin;
@@ -78,3 +96,8 @@ extern SearchParam soft_tm_ratio;
 extern SearchParam hard_tm_ratio;
 extern SearchParam node_tm_base;
 extern SearchParam node_tm_mul;
+extern SearchParam see_pawn;
+extern SearchParam see_knight;
+extern SearchParam see_bishop;
+extern SearchParam see_rook;
+extern SearchParam see_queen;

@@ -318,7 +318,34 @@ int32_t main(int32_t argc, char* argv[]) {
             if (option_name == tt_size.name) {
                 tt_size.set(value);
                 tt.resize(value);
-            } else {
+            }
+
+            else if (option_name == see_pawn.name){
+                see_pawn.set(value);
+                see_piece_values[0] = value;
+            }
+
+            else if (option_name == see_knight.name){
+                see_knight.set(value);
+                see_piece_values[1] = value;
+            }
+
+            else if (option_name == see_bishop.name){
+                see_bishop.set(value);
+                see_piece_values[2] = value;
+            }
+
+            else if (option_name == see_rook.name){
+                see_rook.set(value);
+                see_piece_values[3] = value;
+            }
+
+            else if (option_name == see_queen.name){
+                see_queen.set(value);
+                see_piece_values[4] = value;
+            }
+            
+            else {
                 for (auto* param : all_params) {
                     if (param->name == option_name) {
                         param->set(value);
@@ -357,6 +384,11 @@ int32_t main(int32_t argc, char* argv[]) {
         // Non-standard UCI command for debugging see
         else if (words[0] == "see"){
             cout << see(board, uci::uciToMove(board, words[1]), 0) << "\n";
+        }
+
+        // Prints openbench spsa config
+        else if (words[0] == "obpasta"){
+            printOpenBenchConfig();
         }
 
         // Mostly for debugging purposes. This is a nonstandard UCI command
