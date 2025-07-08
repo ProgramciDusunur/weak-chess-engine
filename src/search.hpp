@@ -14,40 +14,6 @@ constexpr int32_t DEFAULT_BETA = POSITIVE_INFINITY;
 // Maximum search depth
 constexpr int32_t MAX_SEARCH_DEPTH = 1023;
 
-// Tunables
-constexpr int32_t reverse_futility_margin = 60;
-constexpr int32_t reverse_futility_depth = 8;
-constexpr int32_t null_move_depth = 2;
-constexpr int32_t null_move_reduction = 4;
-constexpr int32_t late_move_reduction_depth = 3;
-constexpr int32_t late_move_reduction_base = 75;
-constexpr int32_t late_move_reduction_multiplier = 40;
-constexpr int32_t aspiration_window_depth = 4;
-constexpr int32_t aspiration_window_delta = 10;
-constexpr int32_t aspiration_widening_factor = 30;
-constexpr int32_t internal_iterative_deepening_depth = 7;
-constexpr int32_t delta_value = 1100;
-constexpr int32_t see_noisy_margin = -95;
-constexpr int32_t see_quiet_margin = -60;
-constexpr int32_t history_bonus_base = 150;
-constexpr int32_t history_bonus_mul_linear = 200;
-constexpr int32_t history_bonus_mul_quad = 500;
-constexpr int32_t history_malus_base = 50;
-constexpr int32_t history_malus_mul_linear = 280;
-constexpr int32_t history_malus_mul_quad = 300;
-constexpr int32_t razoring_max_depth = 3;
-constexpr int32_t razoring_base = 500;
-constexpr int32_t razoring_linear_mul = 0;
-constexpr int32_t razoring_quad_mul = 300;
-constexpr int32_t max_history_pruning_depth = 7;
-//constexpr int32_t history_reduction_quad_margin = 2000;
-//constexpr int32_t history_reduction_linear_margin = 0;
-//constexpr int32_t history_reduction_base = 0;
-//constexpr int32_t prob_cut_min_depth = 5;
-//constexpr int32_t probcut_beta_margin = 5;
-//constexpr int32_t probcut_reduction = 4;
-constexpr int32_t tempo = 5;
-
 // Our custom error
 struct SearchAbort : public std::exception {
     const char* what() const noexcept override {

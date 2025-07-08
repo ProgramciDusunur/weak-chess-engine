@@ -18,6 +18,8 @@
 #include "defaults.hpp"
 #include "bench.hpp"
 
+#define IS_TUNING 1
+
 using namespace std;
 using namespace chess;
 
@@ -185,8 +187,11 @@ int32_t main(int32_t argc, char* argv[]) {
         if (words[0] == "uci"){
             cout << "id name " << ENGINE_NAME << "-" << ENGINE_VERSION << "\n";
             cout << "id author " << ENGINE_AUTHOR << "\n";
-            tt_size.print_uci_option();
-            threads.print_uci_option();
+            if (IS_TUNING) print_all_uci_options();
+            else {
+                tt_size.print_uci_option();
+                threads.print_uci_option();
+            }
             cout << "uciok\n";
         }
 
@@ -295,11 +300,31 @@ int32_t main(int32_t argc, char* argv[]) {
             search_root(board);
         }
 
-        // Engine Options
-        // "setoption name <option> value <value>"
-        else if (words[0] == "setoption"){
-            if (words[2] == tt_size.name){
-                tt.resize(stoi(words[4]));
+        else if (words[0] == "setoption") {
+            string option_name;
+            int value = 0;
+
+            // Find the option name and value in the command
+            for (size_t i = 1; i < words.size(); ++i) {
+                if (words[i] == "name" && i + 1 < words.size()) {
+                    option_name = words[i + 1];
+                }
+                if (words[i] == "value" && i + 1 < words.size()) {
+                    value = std::stoi(words[i + 1]);
+                }
+            }
+
+            // Special case: tt_size also resizes TT
+            if (option_name == tt_size.name) {
+                tt_size.set(value);
+                tt.resize(value);
+            } else {
+                for (auto* param : all_params) {
+                    if (param->name == option_name) {
+                        param->set(value);
+                        break;
+                    }
+                }
             }
         }
 

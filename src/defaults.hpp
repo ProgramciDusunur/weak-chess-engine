@@ -3,47 +3,74 @@
 #include <string>
 #include <algorithm>
 #include <iostream>
+#include <vector>
+
+// Global container for all parameters
+inline std::vector<struct SearchParam*> all_params;
 
 struct SearchParam {
     std::string name;
     int32_t current;
     int32_t min;
     int32_t max;
-    int32_t default_value;
+    int32_t step;
 
-    // Constructor: name first
-    SearchParam(const std::string& name, int32_t current, int32_t min, int32_t max, int32_t def)
-        : name(name), current(current), min(min), max(max), default_value(def) {}
+    // Constructor
+    SearchParam(const std::string& name, int32_t current, int32_t min, int32_t max, int32_t step)
+        : name(name), current(current), min(min), max(max), step(step) {
+        all_params.push_back(this); // Register this param
+    }
 
-    // Set current value (clamped to min/max)
     void set(int32_t value) {
         current = std::clamp(value, min, max);
     }
 
-    // Reset current to default
-    void reset() {
-        current = default_value;
-    }
-
-    // Debug string
     std::string to_string() const {
         return name + ": current=" + std::to_string(current) +
                ", min=" + std::to_string(min) +
                ", max=" + std::to_string(max) +
-               ", default=" + std::to_string(default_value);
+               ", step=" + std::to_string(step);
     }
 
-    // UCI option printout
     void print_uci_option() const {
         std::cout << "option name " << name
                   << " type spin"
-                  << " default " << default_value
+                  << " default " << current
                   << " min " << min
                   << " max " << max
                   << std::endl;
     }
 };
 
-// Example usage: name, current, min, max, default
-SearchParam tt_size("Hash", 64, 1, 16384, 64);
-SearchParam threads("Threads", 1, 1, 1, 1);
+// Print all options in UCI format
+inline void print_all_uci_options() {
+    for (const auto* param : all_params)
+        param->print_uci_option();
+}
+
+extern SearchParam tt_size;
+extern SearchParam threads;
+extern SearchParam reverse_futility_margin;
+extern SearchParam reverse_futility_depth;
+extern SearchParam null_move_depth;
+extern SearchParam null_move_reduction;
+extern SearchParam late_move_reduction_depth;
+extern SearchParam late_move_reduction_base;
+extern SearchParam late_move_reduction_multiplier;
+extern SearchParam aspiration_window_depth;
+extern SearchParam aspiration_window_delta;
+extern SearchParam aspiration_widening_factor;
+extern SearchParam internal_iterative_reduction_depth;
+extern SearchParam see_noisy_margin;
+extern SearchParam see_quiet_margin;
+extern SearchParam history_bonus_base;
+extern SearchParam history_bonus_mul_linear;
+extern SearchParam history_bonus_mul_quad;
+extern SearchParam history_malus_base;
+extern SearchParam history_malus_mul_linear;
+extern SearchParam history_malus_mul_quad;
+extern SearchParam razoring_max_depth;
+extern SearchParam razoring_base;
+extern SearchParam razoring_linear_mul;
+extern SearchParam razoring_quad_mul;
+extern SearchParam tempo;

@@ -11,6 +11,7 @@
 #include "transposition.hpp"
 #include "ordering.hpp"
 #include "see.hpp"
+#include "defaults.hpp"
 
 using namespace chess;
 using namespace std;
@@ -182,7 +183,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // If eval is well above beta, we assume that it will hold
     // above beta. We "predict" that a beta cutoff will happen
     // and return eval without searching moves
-    if (!pv_node && !node_is_check && depth <= reverse_futility_depth && static_eval - reverse_futility_margin * depth >= beta)
+    if (!pv_node && !node_is_check && depth <= reverse_futility_depth.current && static_eval - reverse_futility_margin.current * depth >= beta)
         return static_eval;
 
     // Razoring / Alpha pruning
@@ -190,7 +191,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // with depth is still not able to raise alpha, we can be almost sure 
     // that it will not be able to in the next few depths
     // https://github.com/official-stockfish/Stockfish/blob/ce73441f2013e0b8fd3eb7a0c9fd391d52adde70/src/search.cpp#L833
-    if (!pv_node && !node_is_check && depth <= razoring_max_depth && static_eval + razoring_base + razoring_linear_mul * depth + razoring_quad_mul * depth * depth <= alpha)
+    if (!pv_node && !node_is_check && depth <= razoring_max_depth.current && static_eval + razoring_base.current + razoring_linear_mul.current * depth + razoring_quad_mul.current * depth * depth <= alpha)
         return q_search(board, alpha, beta, ply + 1);
 
     // Null move pruning. Basically, we can assume that making a move 
@@ -198,9 +199,9 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // except if it's in a zugzwang. Hence, if we skip out turn and
     // we still maintain beta, then we can prune early. Also do not
     // do NMP when tt suggests that it should fail immediately
-    if (!pv_node && !node_is_check && static_eval >= beta && depth >= null_move_depth && (!tt_hit || !(entry.type == NodeType::UPPERBOUND) || entry.score >= beta) && (board.hasNonPawnMaterial(Color::WHITE) || board.hasNonPawnMaterial(Color::BLACK))){
+    if (!pv_node && !node_is_check && static_eval >= beta && depth >= null_move_depth.current && (!tt_hit || !(entry.type == NodeType::UPPERBOUND) || entry.score >= beta) && (board.hasNonPawnMaterial(Color::WHITE) || board.hasNonPawnMaterial(Color::BLACK))){
         board.makeNullMove();
-        int32_t score = -alpha_beta(board, depth - null_move_reduction, -beta, -beta+1, ply + 1);
+        int32_t score = -alpha_beta(board, depth - null_move_reduction.current, -beta, -beta+1, ply + 1);
         board.unmakeNullMove();
 
         if (score >= beta)
@@ -210,7 +211,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // Internal iterative reduction. Artifically lower the depth on pv nodes / cutnodes
     // that are high enough up in the search tree that we would expect to have found
     // a Transposition. (Comment from Ethereal)
-    if (pv_node && depth >= internal_iterative_deepening_depth && entry.best_move == 0)
+    if (pv_node && depth >= internal_iterative_reduction_depth.current && entry.best_move == 0)
         depth--;
 
     // Main move loop
@@ -242,11 +243,11 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         // Quiet late moves reduction - we have to trust that our
         // move ordering is good enough most of the time to order
         // best moves at the start
-        if (!is_noisy_move && depth >= late_move_reduction_depth)
-            reduction += (int32_t)(((double)late_move_reduction_base / 100) + (((double)late_move_reduction_multiplier * log(depth) * log(move_count)) / 100));
+        if (!is_noisy_move && depth >= late_move_reduction_depth.current)
+            reduction += (int32_t)(((double)late_move_reduction_base.current / 100) + (((double)late_move_reduction_multiplier.current * log(depth) * log(move_count)) / 100));
 
         // Static Exchange Evaluation Pruning
-        int32_t see_margin = !is_noisy_move ? depth * see_quiet_margin : depth * see_noisy_margin;
+        int32_t see_margin = !is_noisy_move ? depth * see_quiet_margin.current : depth * see_noisy_margin.current;
         if (!pv_node && !see(board, current_move, see_margin) && alpha < POSITIVE_WIN_SCORE)
             continue;
 
@@ -312,7 +313,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                         int32_t from = current_move.from().index();
                         int32_t to = current_move.to().index();
 
-                        int32_t bonus = clamp(history_bonus_mul_quad * depth * depth + history_bonus_mul_linear * depth + history_bonus_base, -MAX_HISTORY, MAX_HISTORY);
+                        int32_t bonus = clamp(history_bonus_mul_quad.current * depth * depth + history_bonus_mul_linear.current * depth + history_bonus_base.current, -MAX_HISTORY, MAX_HISTORY);
                         quiet_history[turn][from][to] += bonus - quiet_history[turn][from][to] * abs(bonus) / MAX_HISTORY;
 
                         // History Malus
@@ -320,7 +321,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                             Move quiet = quiets_searched[i];
                             from = quiet.from().index();
                             to = quiet.to().index();
-                            quiet_history[turn][from][to] -= history_malus_mul_quad * depth * depth + history_malus_mul_linear * depth + history_bonus_base;
+                            quiet_history[turn][from][to] -= history_malus_mul_quad.current * depth * depth + history_malus_mul_linear.current * depth + history_bonus_base.current;
                         }
                     }
                     break;
@@ -347,7 +348,7 @@ int32_t search_root(Board &board){
         // Aspiration window search, we predict that the score from previous searches will be
         // around the same as the next depth +/- some margin.
         int32_t score = 0;
-        int32_t delta = aspiration_window_delta;
+        int32_t delta = aspiration_window_delta.current;
         int32_t alpha = DEFAULT_ALPHA;
         int32_t beta = DEFAULT_BETA;
         while ((global_depth == 0 || !soft_bound_time_exceeded()) && global_depth < MAX_SEARCH_DEPTH){
@@ -356,7 +357,7 @@ int32_t search_root(Board &board){
             int32_t researches = 0;
             int32_t new_score = 0;
 
-            if (global_depth >= aspiration_window_depth){
+            if (global_depth >= aspiration_window_depth.current){
                 alpha = max(-POSITIVE_INFINITY, score - delta);
                 beta = min(POSITIVE_INFINITY, score + delta);
             }
@@ -382,7 +383,7 @@ int32_t search_root(Board &board){
                 // If we exceed our time management, we stop widening 
                 if (soft_bound_time_exceeded())
                     break;
-                else delta += delta * aspiration_widening_factor / 100;
+                else delta += delta * aspiration_widening_factor.current / 100;
             }
 
             score = new_score;
