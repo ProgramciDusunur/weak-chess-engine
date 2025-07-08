@@ -62,7 +62,7 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
     movegen::legalmoves<movegen::MoveGenType::CAPTURE>(capture_moves, board);
 
     // Move ordering
-    sort_captures(board, capture_moves, tt_hit, entry.best_move);
+    if (capture_moves.size() != 0) sort_captures(board, capture_moves, tt_hit, entry.best_move);
 
     Move current_best_move;
     for (int idx = 0; idx < capture_moves.size(); idx++){
