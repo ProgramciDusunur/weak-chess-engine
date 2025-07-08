@@ -39,7 +39,7 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
 
     // Get the TT Entry for current position
     TTEntry entry;
-    uint64_t zobrists_key = board.zobrist(); 
+    uint64_t zobrists_key = board.hash(); 
     bool tt_hit = tt.probe(zobrists_key, entry);
 
     // Transposition Table cutoffs
@@ -167,7 +167,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
     // Get the TT Entry for current position
     TTEntry entry;
-    uint64_t zobrists_key = board.zobrist(); 
+    uint64_t zobrists_key = board.hash(); 
     bool tt_hit = tt.probe(zobrists_key, entry);
 
     // Transposition Table cutoffs
@@ -229,7 +229,6 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     sort_moves(board, all_moves, tt_hit, entry.best_move, ply);
 
     for (int idx = 0; idx < all_moves.size(); idx++){
-
         int32_t reduction = 0;
         int32_t extension = 0;
         

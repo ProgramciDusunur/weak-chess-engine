@@ -49,7 +49,7 @@ public:
         TTEntry& entry = table[index];
 
         if (entry.key == 0 || entry.depth <= depth) {
-            entry = TTEntry{ key, static_cast<int32_t>(score), static_cast<int32_t>(depth), type, bestMove };
+            entry = TTEntry{ key, score, depth, type, bestMove };
         }
     }
 
