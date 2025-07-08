@@ -25,7 +25,7 @@ inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_h
         const auto& move = movelist[i];
         int32_t score = 0;
 
-        if (tt_hit && encode_move(move.from(), move.to(), move.typeOf()) == tt_move) {
+        if (tt_hit && move.move() == tt_move) {
             score = TT_BONUS;
         } else if (board.isCapture(move)) {
             score = mvv_lva(board, move);
@@ -63,7 +63,7 @@ inline void sort_captures(chess::Board& board, chess::Movelist& movelist, bool t
         const auto& move = movelist[i];
         int32_t score = 0;
 
-        if (tt_hit && encode_move(move.from(), move.to(), move.typeOf()) == tt_move) {
+        if (tt_hit && move.move() == tt_move) {
             score = TT_BONUS;
         } else {
             score = mvv_lva(board, move);

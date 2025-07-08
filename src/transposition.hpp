@@ -18,7 +18,7 @@ enum class NodeType : uint8_t {
 struct TTEntry {
     uint64_t key = 0; // Zobrist hash
     int32_t score = 0; // Score 
-    int8_t depth = -1; // Depth
+    int32_t depth = -1; // Depth
     NodeType type = NodeType::EXACT;
     uint16_t best_move = 0; // Encoded move
 };
@@ -44,12 +44,12 @@ public:
         table.resize(size);
     }
 
-    void store(uint64_t key, int score, int depth, NodeType type, uint16_t bestMove) {
+    void store(uint64_t key, int32_t score, int32_t depth, NodeType type, uint16_t bestMove) {
         size_t index = key % size;
         TTEntry& entry = table[index];
 
         if (entry.key == 0 || entry.depth <= depth) {
-            entry = TTEntry{ key, static_cast<int16_t>(score), static_cast<int8_t>(depth), type, bestMove };
+            entry = TTEntry{ key, static_cast<int32_t>(score), static_cast<int32_t>(depth), type, bestMove };
         }
     }
 
@@ -62,10 +62,5 @@ public:
         return false;
     }
 };
-
-// Move packing given from-to and move flag, use typeOf()
-inline uint16_t encode_move(chess::Square from, chess::Square to, uint16_t flag) {
-    return (from.index() << 6) | to.index() | (flag << 12);
-}
 
 extern TranspositionTable tt;
