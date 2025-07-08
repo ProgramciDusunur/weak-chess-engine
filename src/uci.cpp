@@ -281,14 +281,14 @@ int32_t main(int32_t argc, char* argv[]) {
                     for (int i = 1; i + 1 < words.size(); i+=2){
                         // If its white to move we get white's time else we get black's time
                         if (board.sideToMove() == Color::WHITE && words[i] == "wtime"){
-                            max_hard_time_ms = std::stoll(words[i+1]) / HARD_TM_RATIO;
-                            max_soft_time_ms = std::stoll(words[i+1]) / SOFT_TM_RATIO;
+                            max_hard_time_ms = std::stoll(words[i+1]) / hard_tm_ratio.current;
+                            max_soft_time_ms = std::stoll(words[i+1]) / soft_tm_ratio.current;
                             // Immediately break up of the loop to not waste time
                             break;
                         }
                         else if (board.sideToMove() == Color::BLACK && words[i] == "btime"){
-                            max_hard_time_ms = std::stoll(words[i+1]) / HARD_TM_RATIO;
-                            max_soft_time_ms = std::stoll(words[i+1]) / SOFT_TM_RATIO;
+                            max_hard_time_ms = std::stoll(words[i+1]) / hard_tm_ratio.current;
+                            max_soft_time_ms = std::stoll(words[i+1]) / soft_tm_ratio.current;
                             // Immediately break up of the loop to not waste time
                             break;
                         }

@@ -74,3 +74,7 @@ extern SearchParam razoring_base;
 extern SearchParam razoring_linear_mul;
 extern SearchParam razoring_quad_mul;
 extern SearchParam tempo;
+extern SearchParam soft_tm_ratio;
+extern SearchParam hard_tm_ratio;
+extern SearchParam node_tm_base;
+extern SearchParam node_tm_mul;

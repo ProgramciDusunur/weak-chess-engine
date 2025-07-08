@@ -18,6 +18,9 @@ using namespace std;
 
 chess::Move root_best_move;
 chess::Move killers[2][1024]{};
+int64_t best_move_nodes = 0;
+int64_t total_nodes_per_search = 0;
+
 int32_t quiet_history[2][64][64]{};
 int32_t global_depth = 0;
 int64_t total_nodes = 0;
@@ -27,6 +30,7 @@ int64_t total_nodes = 0;
 int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
     // Increment node count
     total_nodes++;
+    total_nodes_per_search++;
 
     // Handle time management
     // Here is also where our hard-bound time mnagement is. When the search time 
@@ -126,6 +130,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
     // Increment node count
     total_nodes++;
+    total_nodes_per_search++;
 
     // Handle time management
     // Here is where our hard-bound time mnagement is. When the search time 
@@ -233,6 +238,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
         int32_t reduction = 0;
         int32_t extension = 0;
+        int64_t nodes_b4 = total_nodes;
         
         move_count++;
 
@@ -288,8 +294,13 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
             best_score = score;
             current_best_move = current_move;
 
-            if (is_root)
+            if (is_root){
                 root_best_move = current_move;
+
+                // Node time management, we get total number of nodes spent searching on best move
+                // and scale our tm based on it
+                best_move_nodes = total_nodes - nodes_b4;
+            }
 
             // Update alpha
             if (score > alpha){
@@ -362,7 +373,7 @@ int32_t search_root(Board &board){
                 beta = min(POSITIVE_INFINITY, score + delta);
             }
             while (true){
-                
+                total_nodes_per_search = 0ll;
                 new_score = alpha_beta(board, global_depth, alpha, beta, 0);
                 int64_t elapsed_time = elapsed_ms();
 
