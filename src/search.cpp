@@ -273,7 +273,10 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         if (move_count == 1)
             score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1);
         else {
+            // Reduce less in pv nodes
+            reduction -= pv_node;
             score = -alpha_beta(board, depth - reduction + extension - 1, -alpha - 1, -alpha, ply + 1);
+
 
             // Triple PVS
             if (reduction > 0 && score > alpha)
