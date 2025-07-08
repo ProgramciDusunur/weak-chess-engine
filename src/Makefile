@@ -4,47 +4,37 @@ ifeq ($(OS),Windows_NT)
 	EXE := $(EXE).exe
 endif
 
-# Required GCC version
-GCC_REQUIRED_VERSION := 13
-
-# Try to get installed GCC major version (fallback to 0 if failed)
-GCC_VERSION := $(shell g++ -dumpversion | cut -d. -f1 2>/dev/null || echo 0)
-
-# Use newer GCC if necessary
-ifeq ($(shell [ $(GCC_VERSION) -lt $(GCC_REQUIRED_VERSION) ] && echo yes),yes)
-	CXX := g++-$(GCC_REQUIRED_VERSION)
-else
-	CXX := g++
-endif
-
-# Compiler flags
+# Compiler and flags
+CXX := g++
 CXXFLAGS := -std=c++17 -O3 -march=native
 
-# Source files
 SOURCES := $(wildcard *.cpp)
 
-# Default build target
-all: check-gcc
-	$(CXX) $(CXXFLAGS) $(SOURCES) -o $(EXE)
+# Detect current GCC version (major)
+GCC_VERSION := $(shell $(CXX) -dumpversion | cut -d. -f1 2>/dev/null || echo 0)
 
-# Check GCC version and install if necessary
+# Install latest G++ if version is too old
 check-gcc:
-	@if [ $(GCC_VERSION) -lt $(GCC_REQUIRED_VERSION) ]; then \
-		echo "GCC version is $(GCC_VERSION), installing GCC $(GCC_REQUIRED_VERSION)..."; \
+	@if [ $(GCC_VERSION) -lt 13 ]; then \
+		echo "Detected GCC version $(GCC_VERSION). Installing the latest available G++..."; \
 		if command -v apt >/dev/null 2>&1; then \
-			sudo apt update && sudo apt install -y g++-$(GCC_REQUIRED_VERSION); \
+			sudo apt update && sudo apt install -y g++; \
 		elif command -v dnf >/dev/null 2>&1; then \
 			sudo dnf install -y gcc-g++; \
 		elif command -v brew >/dev/null 2>&1; then \
 			brew install gcc; \
 		else \
-			echo "Unsupported package manager. Please install GCC $(GCC_REQUIRED_VERSION)+ manually."; \
+			echo "Unsupported package manager. Please install a newer version of g++ manually."; \
 			exit 1; \
-		fi; \
+		fi \
 	else \
-		echo "GCC version $(GCC_VERSION) is sufficient."; \
+		echo "G++ version $(GCC_VERSION) is sufficient."; \
 	fi
 
-# Clean build artifacts
+# Build target
+all: check-gcc
+	$(CXX) $(CXXFLAGS) $(SOURCES) -o $(EXE)
+
+# Clean target
 clean:
 	rm -f *.o *.exe Engine-* weak
