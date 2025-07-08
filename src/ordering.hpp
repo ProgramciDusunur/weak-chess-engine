@@ -21,7 +21,7 @@ inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_h
     // Score array for corresponding moves
     std::array<int32_t, 256> scores;
 
-    for (size_t i = 0; i < move_count; ++i) {
+    for (size_t i = 0; i < move_count; i++) {
         const auto& move = movelist[i];
         int32_t score = 0;
 
@@ -39,9 +39,9 @@ inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_h
     }
 
     // In-place sort (descending order) using scores
-    for (size_t i = 0; i < move_count; ++i) {
+    for (size_t i = 0; i < move_count; i++) {
         size_t max_idx = i;
-        for (size_t j = i + 1; j < move_count; ++j) {
+        for (size_t j = i + 1; j < move_count; j++) {
             if (scores[j] > scores[max_idx]) {
                 max_idx = j;
             }
@@ -59,7 +59,7 @@ inline void sort_captures(chess::Board& board, chess::Movelist& movelist, bool t
 
     std::array<int32_t, 256> scores;
 
-    for (size_t i = 0; i < move_count; ++i) {
+    for (size_t i = 0; i < move_count; i++) {
         const auto& move = movelist[i];
         int32_t score = 0;
 
@@ -73,9 +73,9 @@ inline void sort_captures(chess::Board& board, chess::Movelist& movelist, bool t
     }
 
     // In-place selection sort
-    for (size_t i = 0; i < move_count; ++i) {
+    for (size_t i = 0; i < move_count; i++) {
         size_t max_idx = i;
-        for (size_t j = i + 1; j < move_count; ++j) {
+        for (size_t j = i + 1; j < move_count; j++) {
             if (scores[j] > scores[max_idx]) {
                 max_idx = j;
             }

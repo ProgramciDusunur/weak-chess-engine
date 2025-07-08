@@ -226,7 +226,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     killers[0][ply+1] = Move{}; 
     killers[1][ply+1] = Move{}; 
 
-    sort_moves(board, all_moves, false, entry.best_move, ply);
+    sort_moves(board, all_moves, tt_hit, entry.best_move, ply);
 
     for (int idx = 0; idx < all_moves.size(); idx++){
 
