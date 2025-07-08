@@ -14,17 +14,12 @@ constexpr int32_t mvv_lva_table[6][6]{
 // Function to get the value of a capture
 // Returns 0 if not a capture
 inline int32_t mvv_lva(chess::Board &board, chess::Move move){
-    if (!board.isCapture(move))
-        return 0;
-    else {
+    // Beware of UBs!!!!
+    int32_t victim = static_cast<int32_t>(board.at(move.to()).type());
+    if (victim == 6) return 0;
 
-        // Beware of UBs!!!!
-        int32_t victim = static_cast<int32_t>(board.at(move.to()).type());
-        if (victim == 6) return 0;
+    int32_t attacker = static_cast<int32_t>(board.at(move.from()).type());
+    if (attacker == 6) return 0;
 
-        int32_t attacker = static_cast<int32_t>(board.at(move.from()).type());
-        if (attacker == 6) return 0;
-
-        return mvv_lva_table[6 - victim][6 - attacker];
-    }
+    return mvv_lva_table[5 - victim][5 - attacker];
 }
