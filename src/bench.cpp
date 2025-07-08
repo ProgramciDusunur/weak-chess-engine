@@ -70,6 +70,8 @@ void bench(int32_t depth){
         string fen = bench_positions[i];
         Board board = Board(fen);
         total_nodes = 0;
+        max_hard_time_ms = 10000000000ll;
+        max_soft_time_ms = 10000000000ll;
         alpha_beta(board, depth, DEFAULT_ALPHA, DEFAULT_BETA, 0);
         node_count += total_nodes;
     }

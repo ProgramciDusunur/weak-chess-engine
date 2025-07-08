@@ -269,8 +269,8 @@ int32_t main(int32_t argc, char* argv[]) {
             reset_quiet_history();
             if (words.size() > 1){
                 if (words[1] == "infinite"){
-                    max_hard_time_ms = 10000000000;
-                    max_soft_time_ms = 10000000000;
+                    max_hard_time_ms = 10000000000ll;
+                    max_soft_time_ms = 10000000000ll;
                 }
                 else {
                     for (int i = 1; i + 1 < words.size(); i+=2){
