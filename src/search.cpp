@@ -246,6 +246,14 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
         bool is_noisy_move = board.isCapture(current_move);
 
+        // Quiet Move Prunings
+        if (!is_root && !is_noisy_move && best_score > -POSITIVE_WIN_SCORE) {
+            // Late Move Pruning
+            if (move_count >= 4 + 3 * depth * depth) {
+                continue;
+            }        
+        }
+
         // Quiet late moves reduction - we have to trust that our
         // move ordering is good enough most of the time to order
         // best moves at the start
