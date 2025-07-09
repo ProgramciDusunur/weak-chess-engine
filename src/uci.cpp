@@ -364,7 +364,7 @@ int32_t main(int32_t argc, char* argv[]) {
             max_hard_time_ms = 10000000000;
             max_soft_time_ms = 10000000000;
             int32_t depth = stoi(words[1]);
-            int32_t score = alpha_beta(board, depth, DEFAULT_ALPHA, DEFAULT_BETA, 0);
+            int32_t score = alpha_beta(board, depth, DEFAULT_ALPHA, DEFAULT_BETA, 0, false);
             cout << "info score cp " << score << "\n";
             cout << "bestmove " << uci::moveToUci(root_best_move) << "\n"; 
         }
