@@ -57,7 +57,7 @@ extern int64_t total_nodes;
 // ply. This works because a position which is a win for white is a loss for black and vice versa. Most "strong" chess engines use
 // negamax instead of minimax because it makes the code much tidier. Not sure about how much is gains though. The "fail soft" basically
 // means we return max_value instead of alpha. This gives us more information to do puning etc etc.
-int32_t alpha_beta(chess::Board &board, int32_t depth, int32_t alpha, int32_t beta, int32_t ply);
+int32_t alpha_beta(chess::Board &board, int32_t depth, int32_t alpha, int32_t beta, int32_t ply, bool cut_node);
 
 // Root of the search function basically
 int32_t search_root(chess::Board &board);

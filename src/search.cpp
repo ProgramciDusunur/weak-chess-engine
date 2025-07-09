@@ -114,7 +114,7 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
 // ply. This works because a position which is a win for white is a loss for black and vice versa. Most "strong" chess engines use
 // negamax instead of minimax because it makes the code much tidier. Not sure about how much is gains though. The "fail soft" basically
 // means we return max_value instead of alpha. This gives us more information to do puning etc etc.
-int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int32_t ply){
+int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int32_t ply, bool cut_node){
 
     // Search variables
     // max_score for fail-soft negamax
@@ -207,17 +207,18 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     if (!pv_node && !node_is_check && static_eval >= beta && depth >= null_move_depth.current && (!tt_hit || !(entry.type == NodeType::UPPERBOUND) || entry.score >= beta) && (board.hasNonPawnMaterial(Color::WHITE) || board.hasNonPawnMaterial(Color::BLACK))){
         board.makeNullMove();
         int32_t reduction = 3 + depth / 3;
-        int32_t score = -alpha_beta(board, depth - reduction, -beta, -beta+1, ply + 1);
+                                                                                        // Child of a cut node is a all-node and vice versa
+        int32_t null_score = -alpha_beta(board, depth - reduction, -beta, -beta+1, ply + 1, !cut_node);
         board.unmakeNullMove();
 
-        if (score >= beta)
-            return score;
+        if (null_score >= beta)
+            return null_score;
     }
 
     // Internal iterative reduction. Artifically lower the depth on pv nodes / cutnodes
     // that are high enough up in the search tree that we would expect to have found
     // a Transposition. (Comment from Ethereal)
-    if (pv_node && depth >= internal_iterative_reduction_depth.current && entry.best_move == 0)
+    if ((pv_node || cut_node) && depth >= internal_iterative_reduction_depth.current && entry.best_move == 0)
         depth--;
 
     // Main move loop
@@ -290,17 +291,19 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
         // Principle Variation Search
         if (move_count == 1)
-            score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1);
+                                                                                      // This is not a cut-node this is a PV node
+            score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1, false);
         else {
-            score = -alpha_beta(board, depth - reduction + extension - 1, -alpha - 1, -alpha, ply + 1);
+            score = -alpha_beta(board, depth - reduction + extension - 1, -alpha - 1, -alpha, ply + 1, true);
 
             // Triple PVS
-            if (reduction > 0 && score > alpha)
-                score = -alpha_beta(board, depth + extension - 1, -alpha - 1, -alpha, ply + 1);
+            if (reduction > 0 && score > alpha)                                                
+                score = -alpha_beta(board, depth + extension - 1, -alpha - 1, -alpha, ply + 1, !cut_node);
 
             // Research
             if (score > alpha && score < beta) {
-                score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1);
+                                                                                        // This is not a cut-node this is a PV node
+                score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1, false);
             }
         }
 
@@ -392,7 +395,7 @@ int32_t search_root(Board &board){
             }
             while (true){
                 total_nodes_per_search = 0ll;
-                new_score = alpha_beta(board, global_depth, alpha, beta, 0);
+                new_score = alpha_beta(board, global_depth, alpha, beta, 0, false);
                 int64_t elapsed_time = elapsed_ms();
 
                 if (new_score <= alpha){
