@@ -12,7 +12,8 @@ constexpr int32_t DEFAULT_ALPHA = -POSITIVE_INFINITY;
 constexpr int32_t DEFAULT_BETA = POSITIVE_INFINITY;
 
 // Maximum search depth
-constexpr int32_t MAX_SEARCH_DEPTH = 1023;
+constexpr int32_t MAX_SEARCH_DEPTH = 128;
+constexpr int32_t MAX_SEARCH_PLY = 255;
 
 // Our custom error
 struct SearchAbort : public std::exception {
@@ -25,10 +26,10 @@ struct SearchAbort : public std::exception {
 extern chess::Move root_best_move;
 
 // Killers
-extern chess::Move killers[2][1024];
+extern chess::Move killers[2][MAX_SEARCH_PLY+1];
 inline void reset_killers(){
     for (int i = 0; i < 2; ++i)
-        for (int j = 0; j < 1024; ++j)
+        for (int j = 0; j < MAX_SEARCH_PLY + 1; ++j)
             killers[i][j] = chess::Move{};
 }
 
@@ -47,9 +48,12 @@ inline void reset_quiet_history() {
 
 // The global depth variable
 extern int32_t global_depth;
+
 extern int64_t best_move_nodes;
 extern int64_t total_nodes_per_search;
 extern int64_t total_nodes;
+
+extern int32_t seldpeth;
 
 // Search Function
 // We are basically using a fail soft "negamax" search, see here for more info: https://minuskelvin.net/chesswiki/content/minimax.html#negamax
