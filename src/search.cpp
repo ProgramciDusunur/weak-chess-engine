@@ -393,6 +393,33 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
 }
 
+// Prints the Transposition PV
+void print_tt_pv(Board &board, int32_t depth){
+
+    if (depth > 0){
+        TTEntry entry{};
+        uint64_t zobrists_key = board.hash(); 
+        tt.probe(zobrists_key, entry);
+        Movelist all_moves{};
+        movegen::legalmoves(all_moves, board);
+
+        bool is_legal = false;
+        for (int32_t i = 0; i < all_moves.size(); i++){
+            if (all_moves[i].move() == entry.best_move){
+                cout << " " << uci::moveToUci(all_moves[i]);
+                board.makeMove(all_moves[i]);
+                is_legal = true;
+                break;
+            }
+        }
+
+        if (is_legal){
+            print_tt_pv(board, depth - 1);
+        }
+    }
+
+}
+
 
 // Iterative deepening time management loop
 // Uses soft bound time management
@@ -420,16 +447,31 @@ int32_t search_root(Board &board){
                 int64_t elapsed_time = elapsed_ms();
 
                 if (new_score <= alpha){
-                    cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << alpha << " upperbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
+                    cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << alpha << " upperbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv";
+                    
+                    Board new_board = Board(board.getFen());
+                    print_tt_pv(new_board, global_depth);
+                    cout << endl;
+
                     beta = (alpha + beta) / 2;
                     alpha = max(-POSITIVE_INFINITY, new_score - delta);
                 }
                 else if (new_score >= beta){
-                    cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << beta << " lowerbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
+                    cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << beta << " lowerbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv";
+                    
+                    Board new_board = Board(board.getFen());
+                    print_tt_pv(new_board, global_depth);
+                    cout << endl;
+
                     beta = min(POSITIVE_INFINITY, new_score + delta);
                 }
                 else {
-                    cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << new_score << " nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
+                    cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << new_score << " nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv";
+                    
+                    Board new_board = Board(board.getFen());
+                    print_tt_pv(new_board, global_depth);
+                    cout << endl;
+
                     break;
                 }
 
