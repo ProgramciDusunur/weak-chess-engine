@@ -17,13 +17,17 @@ using namespace chess;
 using namespace std;
 
 chess::Move root_best_move{};
-chess::Move killers[2][1024]{};
+chess::Move killers[2][MAX_SEARCH_PLY+1]{};
 int64_t best_move_nodes = 0;
 int64_t total_nodes_per_search = 0;
 
 int32_t quiet_history[2][64][64]{};
 int32_t global_depth = 0;
 int64_t total_nodes = 0;
+
+// Highest searched depth
+int32_t seldpeth = 0;
+
 
 // Quiescence search. When we are in a noisy position (there are captures), we try to "quiet" the position by
 // going down capture trees using negamax and return the eval when we re in a quiet position
@@ -37,6 +41,10 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
     // exceeds our maximum hard bound time limit
     if (global_depth > 1 && hard_bound_time_exceeded())
         throw SearchAbort();
+
+    // Update highest searched depth
+    if (ply > seldpeth)
+        seldpeth = ply;
 
     // Draw detections
     if ((board.isHalfMoveDraw() || board.isInsufficientMaterial() || board.isRepetition(1)))
@@ -61,6 +69,10 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
     int32_t best_score = eval;
     if (alpha > eval) eval = alpha;
     if (alpha >= beta) return eval;
+
+    // Max ply cutoff
+    if (ply >= MAX_SEARCH_PLY)
+        return alpha;
 
     // Get all legal moves for our moveloop in our search
     Movelist capture_moves{};
@@ -138,6 +150,10 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     if (global_depth > 1 && hard_bound_time_exceeded())
         throw SearchAbort();
 
+     // Update highest searched depth
+    if (ply > seldpeth)
+        seldpeth = ply;
+
     // Draw detections
     // Ensure all drawn positions have a score of 0. This is important so
     // our engine will not mistake a drawn position with a winning one
@@ -166,6 +182,11 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
             return 0;
         }
     }
+
+
+    // Max ply cutoff to avoid ubs with our arrays
+    if (ply >= MAX_SEARCH_PLY)
+        return evaluate(board);
 
     // Depth <= 0 (because we allow depth to drop below 0) - we end our search and return eval (haven't started qs yet)
     if (depth <= 0)
@@ -399,16 +420,16 @@ int32_t search_root(Board &board){
                 int64_t elapsed_time = elapsed_ms();
 
                 if (new_score <= alpha){
-                    cout << "info depth " << global_depth << " time " << elapsed_time << " score cp " << alpha << " upperbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
+                    cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << alpha << " upperbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
                     beta = (alpha + beta) / 2;
                     alpha = max(-POSITIVE_INFINITY, new_score - delta);
                 }
                 else if (new_score >= beta){
-                    cout << "info depth " << global_depth << " time " << elapsed_time << " score cp " << beta << " lowerbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
+                    cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << beta << " lowerbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
                     beta = min(POSITIVE_INFINITY, new_score + delta);
                 }
                 else {
-                    cout << "info depth " << global_depth << " time " << elapsed_time << " score cp " << new_score << " nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
+                    cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << new_score << " nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move) << endl;
                     break;
                 }
 
