@@ -315,8 +315,8 @@ int32_t evaluate(const chess::Board& board) {
     int32_t whiteKingSq = board.kingSq(chess::Color::WHITE).index();
     int32_t blackKingSq = board.kingSq(chess::Color::BLACK).index();
 
-    uint64_t white_king_2_sq_mask = OUTER_2_SQ_RING_MASK[whiteKingSq];
-    uint64_t black_king_2_sq_mask = OUTER_2_SQ_RING_MASK[blackKingSq];
+    // uint64_t white_king_2_sq_mask = OUTER_2_SQ_RING_MASK[whiteKingSq];
+    // uint64_t black_king_2_sq_mask = OUTER_2_SQ_RING_MASK[blackKingSq];
     uint64_t white_king_inner_sq_mask = chess::attacks::king(whiteKingSq).getBits();
     uint64_t black_king_inner_sq_mask = chess::attacks::king(blackKingSq).getBits();
 
@@ -381,7 +381,7 @@ int32_t evaluate(const chess::Board& board) {
                 // Non king non pawn pieces
                 if (j < 5){
                     score_array[is_white ? 0 : 1] += inner_king_zone_attacks[j-1]  * count((is_white ? black_king_inner_sq_mask : white_king_inner_sq_mask) & attacks_bb); 
-                    score_array[is_white ? 0 : 1] += outer_king_zone_attacks[j-1]  * count((is_white ? black_king_2_sq_mask : white_king_2_sq_mask) & attacks_bb); 
+                    //score_array[is_white ? 0 : 1] += outer_king_zone_attacks[j-1]  * count((is_white ? black_king_2_sq_mask : white_king_2_sq_mask) & attacks_bb); 
                 }
             }
 
