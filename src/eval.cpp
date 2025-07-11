@@ -125,7 +125,7 @@ int32_t evaluate(const chess::Board& board) {
 
             // Mobilities for knight - queen
             if (j > 0 && j < 5){
-                int attacks;
+                int32_t attacks = 0;
                 switch (j)
                 {
                     // knights
@@ -144,9 +144,7 @@ int32_t evaluate(const chess::Board& board) {
                     case 4:
                         attacks = chess::attacks::queen(static_cast<chess::Square>(sq), board.occ()).count();
                         break;
-                    
-                    default:
-                        break;
+
                 }
                 score_array[is_white ? 0 : 1] += mobilities[j-1][attacks];
             }
