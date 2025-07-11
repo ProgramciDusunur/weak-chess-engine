@@ -170,7 +170,7 @@ int32_t evaluate(const chess::Board& board) {
     int32_t eg_score = (int32_t)unpack_eg(score);
     int32_t mg_phase = phase;
     if (mg_phase > 24) mg_phase = 24;
-    int32_t eg_phase = 24 - mg_phase;
+    int32_t eg_phase = 24 - mg_phase; 
 
 
     // Evaluation tapering, that is, interpolating mg and eg values depending on how many pieces
