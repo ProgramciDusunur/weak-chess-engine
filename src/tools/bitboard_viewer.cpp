@@ -85,9 +85,49 @@ const uint64_t BLACK_PASSED_MASK[64] = {
     63297651233317088ull,    54255129628557504ull
 };
 
+const uint64_t OUTER_2_SQ_RING_MASK[64] = {
+    289363972639948800ull,    578729044791525376ull,
+    1229798258109317120ull,    2459596516218634240ull,
+    4919193032437268480ull,    9838386064874536960ull,
+    1157688987024883712ull,    2315096499073056768ull,
+    289360704169836544ull,    578721412634640384ull,
+    1229782998090514432ull,    2459565996181028864ull,
+    4919131992362057728ull,    9838263984724115456ull,
+    1157443727212412928ull,    2314886354913198080ull,
+    505533473516158976ull,    1083124541087023104ull,
+    2238589255012057088ull,    4477178510024114176ull,
+    8954357020048228352ull,    17908714040096456704ull,
+    17298343833662128128ull,    16149943589319737344ull,
+    1974740130922496ull,    4230955238621184ull,
+    8744489277390848ull,    17488978554781696ull,
+    34977957109563392ull,    69955914219126784ull,
+    67571655600242688ull,    63085717145780224ull,
+    7713828636416ull,    16527168900864ull,
+    34158161239808ull,    68316322479616ull,
+    136632644959232ull,    273265289918464ull,
+    263951779688448ull,    246428582600704ull,
+    30132143111ull,    64559253519ull,
+    133430317343ull,    266860634686ull,
+    533721269372ull,    1067442538744ull,
+    1031061639408ull,    962611650784ull,
+    117703684ull,    252184584ull,
+    521212177ull,    1042424354ull,
+    2084848708ull,    4169697416ull,
+    4027584528ull,    3760201760ull,
+    459780ull,    985096ull,
+    2035985ull,    4071970ull,
+    8143940ull,    16287880ull,
+    15732752ull,    14688288ull
+};
+
 // Helper: Set a bit
 inline void set_bit(uint64_t& bb, int square) {
     bb |= (1ULL << square);
+}
+
+// Helper: Count no. set bits
+inline int32_t count(uint64_t bb){
+    return __builtin_popcountll(bb);
 }
 
 // Helper: LSB index
@@ -208,9 +248,43 @@ int count_black_passed_pawns(uint64_t black_pawns, uint64_t white_pawns) {
     return count;
 }
 
+// King outer ring mask
+uint64_t outer_2_sq_ring_mask(int square) {
+    int file = square % 8;
+    int rank = square / 8;
+    uint64_t mask = 0;
+
+    for (int dr = -2; dr <= 2; ++dr) {
+        for (int df = -2; df <= 2; ++df) {
+            // Skip anything within the inner 3x3 square (including center)
+            if (abs(dr) <= 1 && abs(df) <= 1) continue;
+
+            int r = rank + dr;
+            int f = file + df;
+            if (r >= 0 && r < 8 && f >= 0 && f < 8) {
+                int sq = r * 8 + f;
+                mask |= (1ULL << sq);
+            }
+        }
+    }
+
+    return mask;
+}
+
+/*
+uint64_t OUTER_2_SQ_RING_MASK[64];
+
+void init_outer_2_sq_ring_masks() {
+    for (int sq = 0; sq < 64; ++sq)
+        OUTER_2_SQ_RING_MASK[sq^56] = outer_2_sq_ring_mask(sq);
+}
+        */
+
+
 
 // Test
 int main() {
+    /*
     uint64_t white_pawns = 0;
     uint64_t black_pawns = 0;
 
@@ -241,4 +315,29 @@ int main() {
     cout << "Black passed pawns:\n";
     print_bitboard(black_passed);
     cout << count_black_passed_pawns(black_pawns, white_pawns) << "\n";
+    */
+
+    /*
+
+    init_outer_2_sq_ring_masks();
+
+    for (int sq = A1; sq <= H8; ++sq) {
+        cout << "Outer 2x2 ring of square " << sq << ":\n";
+        print_bitboard(OUTER_2_SQ_RING_MASK[sq]);
+    }
+
+    */
+/*
+    init_outer_2_sq_ring_masks();
+
+    cout << "const uint64_t OUTER_2_SQ_RING_MASK[64] = {\n";
+    for (int i = 0; i < 64; ++i) {
+        cout << "    " << OUTER_2_SQ_RING_MASK[i] << "ull";
+        if (i != 63) cout << ",";
+        if (i % 2 == 1) cout << "\n";
+    }
+    cout << "};\n";
+    */
+
+
 }
