@@ -271,35 +271,32 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
         int32_t move_history = !is_noisy_move ? quiet_history[board.sideToMove() == chess::Color::WHITE][current_move.from().index()][current_move.to().index()] : 0;
 
-        // Move Loop Prunings
-        if (!is_root && best_score > -POSITIVE_WIN_SCORE) {
+        // Quiet Move Prunings
+        if (!is_root && !is_noisy_move && best_score > -POSITIVE_WIN_SCORE) {
             // Late Move Pruning
-            if (!is_noisy_move && move_count >= 4 + 3 * depth * depth) {
+            if (move_count >= 4 + 3 * depth * depth) {
                 continue;
             }
-            
             // Futility Pruning
-            if (!is_noisy_move && depth < 5 && !pv_node && !node_is_check && (static_eval + 100) + 100 * depth <= alpha && alpha < POSITIVE_WIN_SCORE) {
+            if (depth < 5 && !pv_node && !node_is_check && (static_eval + 100) + 100 * depth <= alpha) {
                 continue;
             }            
             // Quiet History Pruning
-            if (!is_noisy_move && depth <= 4 && !node_is_check && move_history < depth * depth * -2048) {
+            if (depth <= 4 && !node_is_check && move_history < depth * depth * -2048) {
                 break;
             }
-
-            // Static Exchange Evaluation Pruning
-            int32_t see_margin = !is_noisy_move ? depth * see_quiet_margin.current : depth * see_noisy_margin.current;
-            if (!pv_node && !see(board, current_move, see_margin))
-                continue;
-
         }
-
 
         // Quiet late moves reduction - we have to trust that our
         // move ordering is good enough most of the time to order
         // best moves at the start
         if (!is_noisy_move && depth >= late_move_reduction_depth.current)
             reduction += (int32_t)(((double)late_move_reduction_base.current / 100) + (((double)late_move_reduction_multiplier.current * log(depth) * log(move_count)) / 100));
+
+        // Static Exchange Evaluation Pruning
+        int32_t see_margin = !is_noisy_move ? depth * see_quiet_margin.current : depth * see_noisy_margin.current;
+        if (!pv_node && !see(board, current_move, see_margin) && alpha < POSITIVE_WIN_SCORE)
+            continue;
 
         // Basic make and undo functionality. Copy-make should be faster but that
         // debugging is for later
@@ -485,7 +482,7 @@ int32_t search_root(Board &board){
                 // If we exceed our time management, we stop widening 
                 if (soft_bound_time_exceeded())
                     break;
-
+                    
                 else delta += delta * aspiration_widening_factor.current / 100;
             }
 
