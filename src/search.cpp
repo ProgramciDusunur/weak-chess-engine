@@ -411,7 +411,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                         // 2-ply (Follow-up moves)
                         if (parent_parent_move_piece != 99 && parent_parent_move_square != 99){
                             int32_t conthist_bonus = clamp(500 * depth * depth + 200 * depth + 150, -MAX_HISTORY, MAX_HISTORY);
-                            two_ply_conthist[parent_parent_move_piece][parent_parent_move_square][move_piece][to] += conthist_bonus - one_ply_conthist[parent_parent_move_piece][parent_parent_move_square][move_piece][to] * abs(conthist_bonus) / MAX_HISTORY;
+                            two_ply_conthist[parent_parent_move_piece][parent_parent_move_square][move_piece][to] += conthist_bonus - two_ply_conthist[parent_parent_move_piece][parent_parent_move_square][move_piece][to] * abs(conthist_bonus) / MAX_HISTORY;
                         }
 
                         // All History Malus
