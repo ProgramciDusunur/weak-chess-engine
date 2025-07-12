@@ -14,7 +14,7 @@
 constexpr int32_t TT_BONUS = 1000000;
 constexpr int32_t KILLER_BONUS = 90000;
 
-inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_hit, uint16_t tt_move, int32_t ply) {
+inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_hit, uint16_t tt_move, int32_t ply, int32_t parent_move_piece, int32_t parent_move_sq) {
     const size_t move_count = movelist.size();
     assert(move_count <= 256); 
 
@@ -33,6 +33,10 @@ inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_h
             score = KILLER_BONUS;
         } else {
             score = quiet_history[board.sideToMove() == chess::Color::WHITE][move.from().index()][move.to().index()];
+
+            //if (parent_move_piece != 99 && parent_move_sq != 99)
+              //  score += one_ply_conthist[parent_move_piece][parent_move_sq][(int32_t)board.at(move.from()).internal()][move.to().index()];
+
         }
 
         scores[i] = score;

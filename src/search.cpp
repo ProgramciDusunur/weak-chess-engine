@@ -16,12 +16,21 @@
 using namespace chess;
 using namespace std;
 
+// Storing the final best move for every complete search
 chess::Move root_best_move{};
+
+// Killer move heuristic
 chess::Move killers[2][MAX_SEARCH_PLY+1]{};
+
+// Quiet history
+int32_t quiet_history[2][64][64]{};
+
+// Continuation history
+int32_t one_ply_conthist[12][64][12][64]{};
+
 int64_t best_move_nodes = 0;
 int64_t total_nodes_per_search = 0;
 
-int32_t quiet_history[2][64][64]{};
 int32_t global_depth = 0;
 int64_t total_nodes = 0;
 
@@ -126,7 +135,7 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
 // ply. This works because a position which is a win for white is a loss for black and vice versa. Most "strong" chess engines use
 // negamax instead of minimax because it makes the code much tidier. Not sure about how much is gains though. The "fail soft" basically
 // means we return max_value instead of alpha. This gives us more information to do puning etc etc.
-int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int32_t ply, bool cut_node){
+int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int32_t ply, bool cut_node, int32_t parent_move_piece, int32_t parent_move_square){
 
     // Search variables
     // max_score for fail-soft negamax
@@ -229,7 +238,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         board.makeNullMove();
         int32_t reduction = 3 + depth / 3;
                                                                                         // Child of a cut node is a all-node and vice versa
-        int32_t null_score = -alpha_beta(board, depth - reduction, -beta, -beta+1, ply + 1, !cut_node);
+        int32_t null_score = -alpha_beta(board, depth - reduction, -beta, -beta+1, ply + 1, !cut_node, 99, 99);
         board.unmakeNullMove();
 
         if (null_score >= beta)
@@ -255,7 +264,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     killers[0][ply+1] = Move{}; 
     killers[1][ply+1] = Move{}; 
 
-    sort_moves(board, all_moves, tt_hit, entry.best_move, ply);
+    sort_moves(board, all_moves, tt_hit, entry.best_move, ply, parent_move_piece, parent_move_square);
 
     for (int idx = 0; idx < all_moves.size(); idx++){
 
@@ -298,6 +307,12 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         if (!pv_node && !see(board, current_move, see_margin) && alpha < POSITIVE_WIN_SCORE)
             continue;
 
+        int32_t score = 0;
+        bool turn = board.sideToMove() == chess::Color::WHITE;
+        int32_t to = current_move.to().index();
+        int32_t from = current_move.from().index();
+        int32_t move_piece = static_cast<int32_t>(board.at(current_move.from()).internal());
+
         // Basic make and undo functionality. Copy-make should be faster but that
         // debugging is for later
         board.makeMove(current_move);
@@ -308,23 +323,21 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
         quiets_searched[quiets_searched_idx++] = current_move;
 
-        int32_t score = 0;
-
         // Principle Variation Search
         if (move_count == 1)
                                                                                       // This is not a cut-node this is a PV node
-            score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1, false);
+            score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1, false, move_piece, to);
         else {
-            score = -alpha_beta(board, depth - reduction + extension - 1, -alpha - 1, -alpha, ply + 1, true);
+            score = -alpha_beta(board, depth - reduction + extension - 1, -alpha - 1, -alpha, ply + 1, true, move_piece, to);
 
             // Triple PVS
             if (reduction > 0 && score > alpha)                                                
-                score = -alpha_beta(board, depth + extension - 1, -alpha - 1, -alpha, ply + 1, !cut_node);
+                score = -alpha_beta(board, depth + extension - 1, -alpha - 1, -alpha, ply + 1, !cut_node, move_piece, to);
 
             // Research
             if (score > alpha && score < beta) {
                                                                                         // This is not a cut-node this is a PV node
-                score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1, false);
+                score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1, false, move_piece, to);
             }
         }
 
@@ -362,21 +375,35 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                         }
 
                         // History Heuristic + gravity
-                        bool turn = board.sideToMove() == chess::Color::WHITE;
-                        int32_t from = current_move.from().index();
-                        int32_t to = current_move.to().index();
-
                         int32_t bonus = clamp(history_bonus_mul_quad.current * depth * depth + history_bonus_mul_linear.current * depth + history_bonus_base.current, -MAX_HISTORY, MAX_HISTORY);
                         quiet_history[turn][from][to] += bonus - quiet_history[turn][from][to] * abs(bonus) / MAX_HISTORY;
 
-                        // History Malus
+                        // Continuation History Update
+                        /*
+                        if (parent_move_piece != 99 && parent_move_square != 99){
+                            int32_t conthist_bonus = clamp(500 * depth * depth + 200 * depth + 150, -MAX_HISTORY, MAX_HISTORY);
+                            one_ply_conthist[parent_move_piece][parent_move_square][move_piece][to] += conthist_bonus - one_ply_conthist[parent_move_piece][parent_move_square][move_piece][to] * abs(conthist_bonus) / MAX_HISTORY;
+                        }
+                            */
+
+                        // All History Malus
                         for (int32_t i = 0; i < quiets_searched_idx; i++){
                             Move quiet = quiets_searched[i];
                             from = quiet.from().index();
                             to = quiet.to().index();
+                            move_piece = static_cast<int32_t>(board.at(quiet.from()).internal());
+
+                            // Quiet History Malus
                             quiet_history[turn][from][to] -= history_malus_mul_quad.current * depth * depth + history_malus_mul_linear.current * depth + history_bonus_base.current;
+
+                            /*
+                            // Conthist Malus
+                            if (parent_move_piece != 99 && parent_move_square != 99)
+                                one_ply_conthist[parent_move_piece][parent_move_square][move_piece][to]  -= 300 * depth * depth + 280 * depth + 50;
+                            */
                         }
                     }
+
                     break;
                 }
             }
@@ -445,7 +472,7 @@ int32_t search_root(Board &board){
             while (true){
 
                 total_nodes_per_search = 0ll;
-                new_score = alpha_beta(board, global_depth, alpha, beta, 0, false);
+                new_score = alpha_beta(board, global_depth, alpha, beta, 0, false, 99, 99);
                 int64_t elapsed_time = elapsed_ms();
 
                 if (new_score <= alpha){
