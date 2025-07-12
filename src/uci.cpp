@@ -272,6 +272,7 @@ int32_t main(int32_t argc, char* argv[]) {
             max_soft_time_ms = 30000;
             reset_killers();
             reset_quiet_history();
+            reset_continuation_history();
             if (words.size() > 1){
                 if (words[1] == "infinite"){
                     max_hard_time_ms = 10000000000ll;
