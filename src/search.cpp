@@ -246,7 +246,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         int32_t reduction = 3 + depth / 3;
                                                                                         
         // Search has no parents :(
-        int32_t parents[4] = {99, 99, 99, 99};                                              // Child of a cut node is a all-node and vice versa
+        int32_t parents[4] = {99, 99, parent_move_piece, parent_move_square};                                              // Child of a cut node is a all-node and vice versa
         int32_t null_score = -alpha_beta(board, depth - reduction, -beta, -beta+1, ply + 1, !cut_node, parents);
         board.unmakeNullMove();
 
