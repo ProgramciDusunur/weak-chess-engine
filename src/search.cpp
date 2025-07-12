@@ -341,8 +341,8 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
         // To update continuation history
         int32_t new_parents[4]{};
-        new_parents[2] = new_parents[0];
-        new_parents[3] = new_parents[1];
+        new_parents[2] = parent_move_piece;
+        new_parents[3] = parent_move_square;
         new_parents[0] = move_piece;
         new_parents[1] = to;
 
