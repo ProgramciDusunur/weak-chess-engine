@@ -1,22 +1,11 @@
 #pragma once
-#include "chess.hpp"
+#include <cstdint>
 
-// Prints the bitboard, nothing else
-void print_bitboard(chess::Bitboard x){
-    int32_t display_board[64]{};
-    while (x){
-        int square = x.pop();
-        display_board[square^56] = 1;
-    }
-
-    for (int i = 0; i < 64; i++){
-
-        // To format the board to look like a chess board, we need to endline
-        // every time a chess row ends, ie after the "h" file
-        if (i != 0 && i % 8 == 0)
-            std::cout << "\n";
-
-        std::cout << display_board[i] << " ";
-    }
-    std::cout << "\n\n";
-}
+int32_t count(uint64_t bb);
+extern const uint64_t WHITE_PASSED_MASK[64];
+extern const uint64_t BLACK_PASSED_MASK[64];
+extern const uint64_t OUTER_2_SQ_RING_MASK[64];
+bool is_white_passed_pawn(int32_t square, uint64_t black_pawns);
+bool is_black_passed_pawn(int32_t square, uint64_t white_pawns);
+int32_t count_white_passed_pawns(uint64_t white_pawns, uint64_t black_pawns);
+int32_t count_black_passed_pawns(uint64_t black_pawns, uint64_t white_pawns);

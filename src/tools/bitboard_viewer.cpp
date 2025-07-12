@@ -120,6 +120,76 @@ const uint64_t OUTER_2_SQ_RING_MASK[64] = {
     15732752ull,    14688288ull
 };
 
+const uint64_t WHITE_AHEAD_MASK[64] = {
+    72340172838076672ull,    144680345676153344ull,
+    289360691352306688ull,    578721382704613376ull,
+    1157442765409226752ull,    2314885530818453504ull,
+    4629771061636907008ull,    9259542123273814016ull,
+    72340172838076416ull,    144680345676152832ull,
+    289360691352305664ull,    578721382704611328ull,
+    1157442765409222656ull,    2314885530818445312ull,
+    4629771061636890624ull,    9259542123273781248ull,
+    72340172838010880ull,    144680345676021760ull,
+    289360691352043520ull,    578721382704087040ull,
+    1157442765408174080ull,    2314885530816348160ull,
+    4629771061632696320ull,    9259542123265392640ull,
+    72340172821233664ull,    144680345642467328ull,
+    289360691284934656ull,    578721382569869312ull,
+    1157442765139738624ull,    2314885530279477248ull,
+    4629771060558954496ull,    9259542121117908992ull,
+    72340168526266368ull,    144680337052532736ull,
+    289360674105065472ull,    578721348210130944ull,
+    1157442696420261888ull,    2314885392840523776ull,
+    4629770785681047552ull,    9259541571362095104ull,
+    72339069014638592ull,    144678138029277184ull,
+    289356276058554368ull,    578712552117108736ull,
+    1157425104234217472ull,    2314850208468434944ull,
+    4629700416936869888ull,    9259400833873739776ull,
+    72057594037927936ull,    144115188075855872ull,
+    288230376151711744ull,    576460752303423488ull,
+    1152921504606846976ull,    2305843009213693952ull,
+    4611686018427387904ull,    9223372036854775808ull,
+    0ull,    0ull,
+    0ull,    0ull,
+    0ull,    0ull,
+    0ull,    0ull
+};
+
+const uint64_t BLACK_AHEAD_MASK[64] = {
+    0ull,    0ull,
+    0ull,    0ull,
+    0ull,    0ull,
+    0ull,    0ull,
+    1ull,    2ull,
+    4ull,    8ull,
+    16ull,    32ull,
+    64ull,    128ull,
+    257ull,    514ull,
+    1028ull,    2056ull,
+    4112ull,    8224ull,
+    16448ull,    32896ull,
+    65793ull,    131586ull,
+    263172ull,    526344ull,
+    1052688ull,    2105376ull,
+    4210752ull,    8421504ull,
+    16843009ull,    33686018ull,
+    67372036ull,    134744072ull,
+    269488144ull,    538976288ull,
+    1077952576ull,    2155905152ull,
+    4311810305ull,    8623620610ull,
+    17247241220ull,    34494482440ull,
+    68988964880ull,    137977929760ull,
+    275955859520ull,    551911719040ull,
+    1103823438081ull,    2207646876162ull,
+    4415293752324ull,    8830587504648ull,
+    17661175009296ull,    35322350018592ull,
+    70644700037184ull,    141289400074368ull,
+    282578800148737ull,    565157600297474ull,
+    1130315200594948ull,    2260630401189896ull,
+    4521260802379792ull,    9042521604759584ull,
+    18085043209519168ull,    36170086419038336ull
+};
+
 // Helper: Set a bit
 inline void set_bit(uint64_t& bb, int square) {
     bb |= (1ULL << square);
@@ -282,6 +352,49 @@ void init_outer_2_sq_ring_masks() {
 
 
 
+// Ahead mask for white pawn: all squares in front (same file)
+uint64_t white_ahead_mask(int square) {
+    int file = square % 8;
+    int rank = square / 8;
+    uint64_t mask = 0;
+    for (int r = rank + 1; r < 8; ++r) {
+        int sq = r * 8 + file;
+        mask |= (1ULL << sq);
+    }
+    return mask;
+}
+
+// Ahead mask for black pawn: all squares in front (same file)
+uint64_t black_ahead_mask(int square) {
+    int file = square % 8;
+    int rank = square / 8;
+    uint64_t mask = 0;
+    for (int r = rank - 1; r >= 0; --r) {
+        int sq = r * 8 + file;
+        mask |= (1ULL << sq);
+    }
+    return mask;
+}
+
+void generate_ahead_masks() {
+    cout << "const uint64_t WHITE_AHEAD_MASK[64] = {\n";
+    for (int i = 0; i < 64; ++i) {
+        cout << "    " << white_ahead_mask(i) << "ull";
+        if (i != 63) cout << ",";
+        if (i % 2 == 1) cout << "\n";
+    }
+    cout << "};\n\n";
+
+    cout << "const uint64_t BLACK_AHEAD_MASK[64] = {\n";
+    for (int i = 0; i < 64; ++i) {
+        cout << "    " << black_ahead_mask(i) << "ull";
+        if (i != 63) cout << ",";
+        if (i % 2 == 1) cout << "\n";
+    }
+    cout << "};\n";
+}
+
+
 // Test
 int main() {
     /*
@@ -339,5 +452,7 @@ int main() {
     cout << "};\n";
     */
 
+    print_bitboard(BLACK_AHEAD_MASK[D5]);
+    return 0;
 
 }

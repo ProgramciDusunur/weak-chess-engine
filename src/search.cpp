@@ -441,13 +441,15 @@ int32_t search_root(Board &board){
                 alpha = max(-POSITIVE_INFINITY, score - delta);
                 beta = min(POSITIVE_INFINITY, score + delta);
             }
+
             while (true){
+
                 total_nodes_per_search = 0ll;
                 new_score = alpha_beta(board, global_depth, alpha, beta, 0, false);
                 int64_t elapsed_time = elapsed_ms();
 
                 if (new_score <= alpha){
-                    cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << alpha << " upperbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv";
+                    cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << alpha << " upperbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move);
                     
                     Board new_board = Board(board.getFen());
                     print_tt_pv(new_board, global_depth);
@@ -457,18 +459,20 @@ int32_t search_root(Board &board){
                     alpha = max(-POSITIVE_INFINITY, new_score - delta);
                 }
                 else if (new_score >= beta){
-                    cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << beta << " lowerbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv";
+                    cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << beta << " lowerbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move);
                     
                     Board new_board = Board(board.getFen());
+                    new_board.makeMove(root_best_move);
                     print_tt_pv(new_board, global_depth);
                     cout << endl;
 
                     beta = min(POSITIVE_INFINITY, new_score + delta);
                 }
                 else {
-                    cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << new_score << " nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv";
+                    cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << new_score << " nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move);
                     
                     Board new_board = Board(board.getFen());
+                    new_board.makeMove(root_best_move);
                     print_tt_pv(new_board, global_depth);
                     cout << endl;
 
@@ -478,6 +482,7 @@ int32_t search_root(Board &board){
                 // If we exceed our time management, we stop widening 
                 if (soft_bound_time_exceeded())
                     break;
+                    
                 else delta += delta * aspiration_widening_factor.current / 100;
             }
 
