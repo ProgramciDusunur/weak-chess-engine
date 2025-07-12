@@ -452,6 +452,7 @@ int32_t search_root(Board &board){
                     cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << alpha << " upperbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move);
                     
                     Board new_board = Board(board.getFen());
+                    new_board.makeMove(root_best_move);
                     print_tt_pv(new_board, global_depth);
                     cout << endl;
 
