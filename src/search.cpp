@@ -221,7 +221,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     int32_t static_eval = evaluate(board);
 
     // Improving heuristic (Whether we are at a better position than 2 plies before)
-    bool improving = static_eval > search_info.parent_parent_eval;
+    bool improving = static_eval > search_info.parent_parent_eval && search_info.parent_parent_eval != -100000;
 
     // Reverse futility pruning / Static Null Move Pruning
     // If eval is well above beta, we assume that it will hold
