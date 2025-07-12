@@ -278,13 +278,17 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                 continue;
             }
             // Futility Pruning
-            if (depth < 5 && !pv_node && !node_is_check && (static_eval + 100) + 100 * depth <= alpha) {
+            if (depth < 5 && !pv_node && !node_is_check && (static_eval + 100) + 100 * depth <= alpha && alpha < POSITIVE_WIN_SCORE) {
                 continue;
             }            
             // Quiet History Pruning
             if (depth <= 4 && !node_is_check && move_history < depth * depth * -2048) {
                 break;
             }
+            // Static Exchange Evaluation Pruning
+            int32_t see_margin = !is_noisy_move ? depth * see_quiet_margin.current : depth * see_noisy_margin.current;
+            if (!pv_node && !see(board, current_move, see_margin))
+                continue;
         }
 
         // Quiet late moves reduction - we have to trust that our
@@ -292,11 +296,6 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         // best moves at the start
         if (!is_noisy_move && depth >= late_move_reduction_depth.current)
             reduction += (int32_t)(((double)late_move_reduction_base.current / 100) + (((double)late_move_reduction_multiplier.current * log(depth) * log(move_count)) / 100));
-
-        // Static Exchange Evaluation Pruning
-        int32_t see_margin = !is_noisy_move ? depth * see_quiet_margin.current : depth * see_noisy_margin.current;
-        if (!pv_node && !see(board, current_move, see_margin) && best_score > -POSITIVE_WIN_SCORE)
-            continue;
 
         // Basic make and undo functionality. Copy-make should be faster but that
         // debugging is for later
