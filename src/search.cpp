@@ -311,7 +311,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         bool turn = board.sideToMove() == chess::Color::WHITE;
         int32_t to = current_move.to().index();
         int32_t from = current_move.from().index();
-        //int32_t move_piece = static_cast<int32_t>(board.at(current_move.from()).internal());
+        int32_t move_piece = static_cast<int32_t>(board.at(current_move.from()).internal());
 
         // Basic make and undo functionality. Copy-make should be faster but that
         // debugging is for later
@@ -326,18 +326,18 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         // Principle Variation Search
         if (move_count == 1)
                                                                                       // This is not a cut-node this is a PV node
-            score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1, false, 99, 99);//, move_piece, to);
+            score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1, false, move_piece, to);
         else {
-            score = -alpha_beta(board, depth - reduction + extension - 1, -alpha - 1, -alpha, ply + 1, true, 99, 99);//, move_piece, to);
+            score = -alpha_beta(board, depth - reduction + extension - 1, -alpha - 1, -alpha, ply + 1, true, move_piece, to);
 
             // Triple PVS
             if (reduction > 0 && score > alpha)                                                
-                score = -alpha_beta(board, depth + extension - 1, -alpha - 1, -alpha, ply + 1, !cut_node, 99, 99);//, move_piece, to);
+                score = -alpha_beta(board, depth + extension - 1, -alpha - 1, -alpha, ply + 1, !cut_node, move_piece, to);
 
             // Research
             if (score > alpha && score < beta) {
                                                                                         // This is not a cut-node this is a PV node
-                score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1, false, 99, 99);//, move_piece, to);
+                score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1, false, move_piece, to);
             }
         }
 
@@ -379,26 +379,24 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                         quiet_history[turn][from][to] += bonus - quiet_history[turn][from][to] * abs(bonus) / MAX_HISTORY;
 
                         // Continuation History Update
-                        /*
                         if (parent_move_piece != 99 && parent_move_square != 99){
                             int32_t conthist_bonus = clamp(500 * depth * depth + 200 * depth + 150, -MAX_HISTORY, MAX_HISTORY);
                             one_ply_conthist[parent_move_piece][parent_move_square][move_piece][to] += conthist_bonus - one_ply_conthist[parent_move_piece][parent_move_square][move_piece][to] * abs(conthist_bonus) / MAX_HISTORY;
                         }
-                        */
 
                         // All History Malus
                         for (int32_t i = 0; i < quiets_searched_idx; i++){
                             Move quiet = quiets_searched[i];
                             from = quiet.from().index();
                             to = quiet.to().index();
-                            // move_piece = static_cast<int32_t>(board.at(quiet.from()).internal());
+                            move_piece = static_cast<int32_t>(board.at(quiet.from()).internal());
 
                             // Quiet History Malus
                             quiet_history[turn][from][to] -= history_malus_mul_quad.current * depth * depth + history_malus_mul_linear.current * depth + history_bonus_base.current;
 
                             // Conthist Malus
-                            // if (parent_move_piece != 99 && parent_move_square != 99)
-                               // one_ply_conthist[parent_move_piece][parent_move_square][move_piece][to]  -= 300 * depth * depth + 280 * depth + 50;
+                            if (parent_move_piece != 99 && parent_move_square != 99)
+                                one_ply_conthist[parent_move_piece][parent_move_square][move_piece][to]  -= 300 * depth * depth + 280 * depth + 50;
                         }
                     }
 
