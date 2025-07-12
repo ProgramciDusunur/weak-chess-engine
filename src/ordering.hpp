@@ -10,17 +10,17 @@
 #include "transposition.hpp"
 #include "mvv_lva.hpp"
 #include "see.hpp"
+#include "search_info.hpp"
 
 constexpr int32_t TT_BONUS = 1000000;
 constexpr int32_t KILLER_BONUS = 90000;
 
-inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_hit, uint16_t tt_move, int32_t ply, int32_t* search_info) {
+inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_hit, uint16_t tt_move, int32_t ply, SearchInfo search_info) {
 
-    int32_t parent_move_piece = search_info[0];
-    int32_t parent_move_square = search_info[1];
-    int32_t parent_parent_move_piece = search_info[2];
-    int32_t parent_parent_move_square = search_info[3];
-
+    int32_t parent_move_piece = search_info.parent_move_piece;
+    int32_t parent_move_square = search_info.parent_move_square;
+    int32_t parent_parent_move_piece = search_info.parent_parent_move_piece;
+    int32_t parent_parent_move_square = search_info.parent_parent_move_square;
 
     const size_t move_count = movelist.size();
     assert(move_count <= 256); 
@@ -42,11 +42,11 @@ inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_h
             score = quiet_history[board.sideToMove() == chess::Color::WHITE][move.from().index()][move.to().index()];
 
             // Countermoves
-            if (parent_move_piece != 99 && parent_move_square != 99)
+            if (parent_move_piece != -1 && parent_move_square != -1)
                 score += one_ply_conthist[parent_move_piece][parent_move_square][static_cast<int32_t>(board.at(move.from()).internal())][move.to().index()];
 
             // Follow-up moves
-            if (parent_parent_move_piece != 99 && parent_parent_move_square != 99)
+            if (parent_parent_move_piece != -1 && parent_parent_move_square != -1)
                 score += two_ply_conthist[parent_parent_move_piece][parent_parent_move_square][static_cast<int32_t>(board.at(move.from()).internal())][move.to().index()];
 
         }
