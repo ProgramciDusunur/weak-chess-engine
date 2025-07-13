@@ -264,14 +264,6 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     Move quiets_searched[1024]{};
     int32_t quiets_searched_idx = 0;
 
-    // Store captures searched for history malus
-    Move captures_searched[1024]{};
-    int32_t captures_searched_idx = 0;
-
-    // Store captures searched for history malus
-    // Move captures_searched[1024]{};
-    // int32_t quiets_searched_idx = 0;
-
     // Clear killers of next ply
     killers[0][ply+1] = Move{}; 
     killers[1][ply+1] = Move{}; 
@@ -318,10 +310,8 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         // Quiet late moves reduction - we have to trust that our
         // move ordering is good enough most of the time to order
         // best moves at the start
-        if (!is_noisy_move && depth >= late_move_reduction_depth.current){
+        if (!is_noisy_move && depth >= late_move_reduction_depth.current)
             reduction += (int32_t)(((double)late_move_reduction_base.current / 100) + (((double)late_move_reduction_multiplier.current * log(depth) * log(move_count)) / 100));
-            // reduction += (int32_t)!improving;
-        }
 
         // Static Exchange Evaluation Pruning
         int32_t see_margin = !is_noisy_move ? depth * see_quiet_margin.current : depth * see_noisy_margin.current;
@@ -342,7 +332,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         if (board.inCheck())
             extension++;
 
-        if (!is_noisy_move) quiets_searched[quiets_searched_idx++] = current_move;
+        quiets_searched[quiets_searched_idx++] = current_move;
 
         // To update continuation history
         SearchInfo info{};
@@ -350,8 +340,6 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         info.parent_parent_move_square = parent_move_square;
         info.parent_move_piece = move_piece;
         info.parent_move_square = to;
-        // info.parent_parent_eval = info.parent_static_eval;
-        // info.parent_static_eval = static_eval;
 
         // Principle Variation Search
         if (move_count == 1)
