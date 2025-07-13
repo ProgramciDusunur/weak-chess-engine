@@ -260,6 +260,41 @@ const uint64_t BLACK_FRONT_MASK[64] = {
     18014398509481984ull,    36028797018963968ull
 };
 
+const uint64_t QUEENSIDE_HALF_MASK[64] = {
+    17361641481138401520ull,    17361641481138401520ull,
+    17361641481138401520ull,    17361641481138401520ull,
+    1085102592571150095ull,    1085102592571150095ull,
+    1085102592571150095ull,    1085102592571150095ull,
+    17361641481138401520ull,    17361641481138401520ull,
+    17361641481138401520ull,    17361641481138401520ull,
+    1085102592571150095ull,    1085102592571150095ull,
+    1085102592571150095ull,    1085102592571150095ull,
+    17361641481138401520ull,    17361641481138401520ull,
+    17361641481138401520ull,    17361641481138401520ull,
+    1085102592571150095ull,    1085102592571150095ull,
+    1085102592571150095ull,    1085102592571150095ull,
+    17361641481138401520ull,    17361641481138401520ull,
+    17361641481138401520ull,    17361641481138401520ull,
+    1085102592571150095ull,    1085102592571150095ull,
+    1085102592571150095ull,    1085102592571150095ull,
+    17361641481138401520ull,    17361641481138401520ull,
+    17361641481138401520ull,    17361641481138401520ull,
+    1085102592571150095ull,    1085102592571150095ull,
+    1085102592571150095ull,    1085102592571150095ull,
+    17361641481138401520ull,    17361641481138401520ull,
+    17361641481138401520ull,    17361641481138401520ull,
+    1085102592571150095ull,    1085102592571150095ull,
+    1085102592571150095ull,    1085102592571150095ull,
+    17361641481138401520ull,    17361641481138401520ull,
+    17361641481138401520ull,    17361641481138401520ull,
+    1085102592571150095ull,    1085102592571150095ull,
+    1085102592571150095ull,    1085102592571150095ull,
+    17361641481138401520ull,    17361641481138401520ull,
+    17361641481138401520ull,    17361641481138401520ull,
+    1085102592571150095ull,    1085102592571150095ull,
+    1085102592571150095ull,    1085102592571150095ull
+};
+
 // Helper: Set a bit
 inline void set_bit(uint64_t& bb, int square) {
     bb |= (1ULL << square);
@@ -500,27 +535,33 @@ void generate_front_masks() {
     cout << "};\n";
 }
 
-uint64_t queenside_castling_mask(int square) {
-    int rank = square / 8;
+uint64_t generate_queenside_half_mask(int square) {
     int file = square % 8;
-
-    // Must be on rank 1 (white) or 8 (black) and on or past file C
-    if (rank != 0 && rank != 7) return 0;
-    if (file < 2 || file > 4) return 0; // Only allow E, D, C (like real castling)
-
     uint64_t mask = 0;
-    for (int f = file - 1; f > 0; --f) {  // Exclude file A (rook square)
-        int sq = rank * 8 + f;
-        mask |= (1ULL << sq);
+
+    if (file <= 3) {
+        // King on queenside: return full kingside
+        for (int r = 0; r < 8; ++r) {
+            for (int f = 4; f < 8; ++f) {
+                mask |= (1ULL << (r * 8 + f));
+            }
+        }
+    } else {
+        // King on kingside: return full queenside
+        for (int r = 0; r < 8; ++r) {
+            for (int f = 0; f < 4; ++f) {
+                mask |= (1ULL << (r * 8 + f));
+            }
+        }
     }
 
     return mask;
 }
 
-void generate_queenside_castling_masks() {
-    cout << "const uint64_t QUEENSIDE_CASTLING_MASK[64] = {\n";
+void generate_queenside_half_masks() {
+    cout << "const uint64_t QUEENSIDE_HALF_MASK[64] = {\n";
     for (int i = 0; i < 64; ++i) {
-        cout << "    " << queenside_castling_mask(i) << "ull";
+        cout << "    " << generate_queenside_half_mask(i) << "ull";
         if (i != 63) cout << ",";
         if (i % 2 == 1) cout << "\n";
     }
@@ -585,7 +626,10 @@ int main() {
     cout << "};\n";
     */
 
-    generate_queenside_castling_masks();
+    // generate_queenside_half_masks();
+    // print_bitboard(QUEENSIDE_HALF_MASK[D8]);
+
+    print_bitboard(1ull << E4);
 
     return 0;
 
