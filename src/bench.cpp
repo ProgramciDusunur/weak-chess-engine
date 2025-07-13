@@ -5,6 +5,7 @@
 #include "chess.hpp"
 #include "search.hpp"
 #include "timeman.hpp"
+#include "search_info.hpp"
 
 using namespace std;
 using namespace chess;
@@ -72,8 +73,8 @@ void bench(int32_t depth){
         total_nodes = 0ull;
         max_hard_time_ms = 10000000000ll;
         max_soft_time_ms = 10000000000ll;
-        int32_t NO_PARENTS[4] = {99, 99, 99, 99};
-        alpha_beta(board, depth, DEFAULT_ALPHA, DEFAULT_BETA, 0, false, NO_PARENTS);
+        SearchInfo info{};
+        alpha_beta(board, depth, DEFAULT_ALPHA, DEFAULT_BETA, 0, false, info);
         node_count += total_nodes;
     }
     cout << node_count << " nodes " <<  (1000 * node_count) / (elapsed_ms() + 1)  << " nps" << endl;

@@ -12,22 +12,13 @@
 #include "ordering.hpp"
 #include "see.hpp"
 #include "defaults.hpp"
+#include "history.hpp"
 
 using namespace chess;
 using namespace std;
 
 // Storing the final best move for every complete search
 chess::Move root_best_move{};
-
-// Killer move heuristic
-chess::Move killers[2][MAX_SEARCH_PLY+1]{};
-
-// Quiet history
-int32_t quiet_history[2][64][64]{};
-
-// Continuation history
-int32_t one_ply_conthist[12][64][12][64]{};
-int32_t two_ply_conthist[12][64][12][64]{};
 
 int64_t best_move_nodes = 0;
 int64_t total_nodes_per_search = 0;
@@ -136,7 +127,7 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
 // ply. This works because a position which is a win for white is a loss for black and vice versa. Most "strong" chess engines use
 // negamax instead of minimax because it makes the code much tidier. Not sure about how much is gains though. The "fail soft" basically
 // means we return max_value instead of alpha. This gives us more information to do puning etc etc.
-int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int32_t ply, bool cut_node, int32_t* search_info){
+int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int32_t ply, bool cut_node, SearchInfo search_info){
 
     // Search variables
     // max_score for fail-soft negamax
@@ -148,10 +139,10 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     // I'm aware this is not the best way to do it but that's for later
     bool pv_node = beta - alpha > 1;
 
-    int32_t parent_move_piece = search_info[0];
-    int32_t parent_move_square = search_info[1];
-    int32_t parent_parent_move_piece = search_info[2];
-    int32_t parent_parent_move_square = search_info[3];
+    int32_t parent_move_piece = search_info.parent_move_piece;
+    int32_t parent_move_square = search_info.parent_move_square;
+    int32_t parent_parent_move_piece = search_info.parent_parent_move_piece;
+    int32_t parent_parent_move_square = search_info.parent_parent_move_square;
 
     // For updating Transposition table later
     int32_t old_alpha = alpha;  
@@ -199,7 +190,6 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         }
     }
 
-
     // Max ply cutoff to avoid ubs with our arrays
     if (ply >= MAX_SEARCH_PLY)
         return evaluate(board);
@@ -220,6 +210,9 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
     // Static evaluation for pruning metrics
     int32_t static_eval = evaluate(board);
+
+    // Improving heuristic (Whether we are at a better position than 2 plies before)
+    // bool improving = static_eval > search_info.parent_parent_eval && search_info.parent_parent_eval != -100000;
 
     // Reverse futility pruning / Static Null Move Pruning
     // If eval is well above beta, we assume that it will hold
@@ -246,8 +239,10 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         int32_t reduction = 3 + depth / 3;
                                                                                         
         // Search has no parents :(
-        int32_t parents[4] = {99, 99, parent_move_piece, parent_move_square};                                              // Child of a cut node is a all-node and vice versa
-        int32_t null_score = -alpha_beta(board, depth - reduction, -beta, -beta+1, ply + 1, !cut_node, parents);
+        SearchInfo info{};                                                                   
+        info.parent_parent_move_piece = parent_move_piece;
+        info.parent_parent_move_square = parent_move_square;                                // Child of a cut node is a all-node and vice versa
+        int32_t null_score = -alpha_beta(board, depth - reduction, -beta, -beta+1, ply + 1, !cut_node, info);
         board.unmakeNullMove();
 
         if (null_score >= beta)
@@ -340,27 +335,27 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         quiets_searched[quiets_searched_idx++] = current_move;
 
         // To update continuation history
-        int32_t new_parents[4]{};
-        new_parents[2] = parent_move_piece;
-        new_parents[3] = parent_move_square;
-        new_parents[0] = move_piece;
-        new_parents[1] = to;
+        SearchInfo info{};
+        info.parent_parent_move_piece = parent_move_piece;
+        info.parent_parent_move_square = parent_move_square;
+        info.parent_move_piece = move_piece;
+        info.parent_move_square = to;
 
         // Principle Variation Search
         if (move_count == 1)
                                                                                       // This is not a cut-node this is a PV node
-            score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1, false, new_parents);
+            score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1, false, info);
         else {
-            score = -alpha_beta(board, depth - reduction + extension - 1, -alpha - 1, -alpha, ply + 1, true, new_parents);
+            score = -alpha_beta(board, depth - reduction + extension - 1, -alpha - 1, -alpha, ply + 1, true, info);
 
             // Triple PVS
             if (reduction > 0 && score > alpha)                                                
-                score = -alpha_beta(board, depth + extension - 1, -alpha - 1, -alpha, ply + 1, !cut_node, new_parents);
+                score = -alpha_beta(board, depth + extension - 1, -alpha - 1, -alpha, ply + 1, !cut_node, info);
 
             // Research
             if (score > alpha && score < beta) {
                                                                                         // This is not a cut-node this is a PV node
-                score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1, false, new_parents);
+                score = -alpha_beta(board, depth + extension - 1, -beta, -alpha, ply + 1, false, info);
             }
         }
 
@@ -403,13 +398,13 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
                         // Continuation History Update
                         // 1-ply (Countermoves)
-                        if (parent_move_piece != 99 && parent_move_square != 99){
+                        if (parent_move_piece != -1 && parent_move_square != -1){
                             int32_t conthist_bonus = clamp(500 * depth * depth + 200 * depth + 150, -MAX_HISTORY, MAX_HISTORY);
                             one_ply_conthist[parent_move_piece][parent_move_square][move_piece][to] += conthist_bonus - one_ply_conthist[parent_move_piece][parent_move_square][move_piece][to] * abs(conthist_bonus) / MAX_HISTORY;
                         }
                         
                         // 2-ply (Follow-up moves)
-                        if (parent_parent_move_piece != 99 && parent_parent_move_square != 99){
+                        if (parent_parent_move_piece != -1 && parent_parent_move_square != -1){
                             int32_t conthist_bonus = clamp(500 * depth * depth + 200 * depth + 150, -MAX_HISTORY, MAX_HISTORY);
                             two_ply_conthist[parent_parent_move_piece][parent_parent_move_square][move_piece][to] += conthist_bonus - two_ply_conthist[parent_parent_move_piece][parent_parent_move_square][move_piece][to] * abs(conthist_bonus) / MAX_HISTORY;
                         }
@@ -426,11 +421,11 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
 
                             // Conthist Malus
                             // 1-ply (Countermoves)
-                            if (parent_move_piece != 99 && parent_move_square != 99)
-                                one_ply_conthist[parent_move_piece][parent_move_square][move_piece][to]  -= 300 * depth * depth + 280 * depth + 50;
+                            if (parent_move_piece != -1 && parent_move_square != -1)
+                                one_ply_conthist[parent_move_piece][parent_move_square][move_piece][to] -= 300 * depth * depth + 280 * depth + 50;
 
                             // 2-ply (Follow-up moves)
-                            if (parent_parent_move_piece != 99 && parent_parent_move_square != 99)
+                            if (parent_parent_move_piece != -1 && parent_parent_move_square != -1)
                                 two_ply_conthist[parent_parent_move_piece][parent_parent_move_square][move_piece][to]  -= 300 * depth * depth + 280 * depth + 50;
                         }
                     }
@@ -503,8 +498,8 @@ int32_t search_root(Board &board){
             while (true){
 
                 total_nodes_per_search = 0ll;
-                int32_t NO_PARENTS[4] = {99, 99, 99, 99};
-                new_score = alpha_beta(board, global_depth, alpha, beta, 0, false, NO_PARENTS);
+                SearchInfo info{};
+                new_score = alpha_beta(board, global_depth, alpha, beta, 0, false, info);
                 int64_t elapsed_time = elapsed_ms();
 
                 if (new_score <= alpha){
