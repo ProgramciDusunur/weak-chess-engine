@@ -500,6 +500,33 @@ void generate_front_masks() {
     cout << "};\n";
 }
 
+uint64_t queenside_castling_mask(int square) {
+    int rank = square / 8;
+    int file = square % 8;
+
+    // Must be on rank 1 (white) or 8 (black) and on or past file C
+    if (rank != 0 && rank != 7) return 0;
+    if (file < 2 || file > 4) return 0; // Only allow E, D, C (like real castling)
+
+    uint64_t mask = 0;
+    for (int f = file - 1; f > 0; --f) {  // Exclude file A (rook square)
+        int sq = rank * 8 + f;
+        mask |= (1ULL << sq);
+    }
+
+    return mask;
+}
+
+void generate_queenside_castling_masks() {
+    cout << "const uint64_t QUEENSIDE_CASTLING_MASK[64] = {\n";
+    for (int i = 0; i < 64; ++i) {
+        cout << "    " << queenside_castling_mask(i) << "ull";
+        if (i != 63) cout << ",";
+        if (i % 2 == 1) cout << "\n";
+    }
+    cout << "};\n";
+}
+
 
 // Test
 int main() {
@@ -557,6 +584,8 @@ int main() {
     }
     cout << "};\n";
     */
+
+    generate_queenside_castling_masks();
 
     return 0;
 
