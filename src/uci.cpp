@@ -17,6 +17,7 @@
 #include "see.hpp"
 #include "defaults.hpp"
 #include "bench.hpp"
+#include "history.hpp"
 
 #define IS_TUNING 0
 
@@ -206,7 +207,6 @@ int32_t main(int32_t argc, char* argv[]) {
         else if (words[0] == "ucinewgame"){
             tt.clear();
             reset_continuation_history();
-            reset_capture_hist();
         }
 
         // Parse the position command. The position commands comes in a number

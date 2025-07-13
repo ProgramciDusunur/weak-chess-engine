@@ -12,25 +12,13 @@
 #include "ordering.hpp"
 #include "see.hpp"
 #include "defaults.hpp"
+#include "history.hpp"
 
 using namespace chess;
 using namespace std;
 
 // Storing the final best move for every complete search
 chess::Move root_best_move{};
-
-// Killer move heuristic
-chess::Move killers[2][MAX_SEARCH_PLY+1]{};
-
-// Quiet history
-int32_t quiet_history[2][64][64]{};
-
-// Continuation history
-int32_t one_ply_conthist[12][64][12][64]{};
-int32_t two_ply_conthist[12][64][12][64]{};
-
-// Capture history
-int32_t capture_hist[12][64][12]{};
 
 int64_t best_move_nodes = 0;
 int64_t total_nodes_per_search = 0;
@@ -355,7 +343,6 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
             extension++;
 
         if (!is_noisy_move) quiets_searched[quiets_searched_idx++] = current_move;
-        else captures_searched[captures_searched_idx++] = current_move;
 
         // To update continuation history
         SearchInfo info{};
@@ -453,27 +440,6 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                             if (parent_parent_move_piece != -1 && parent_parent_move_square != -1)
                                 two_ply_conthist[parent_parent_move_piece][parent_parent_move_square][move_piece][to]  -= 300 * depth * depth + 280 * depth + 50;
                         }
-                    }
-
-                    // Captures that failed high
-                    else {
-                        // Capture history bonus
-                        // [piece][to][captured]
-                        int32_t captured = static_cast<int32_t>(board.at(current_move.to()).internal());
-                        int32_t capture_hist_bonus = clamp(depth * depth, -MAX_HISTORY, MAX_HISTORY);
-                        capture_hist[move_piece][to][captured] += capture_hist_bonus - capture_hist[move_piece][to][captured]  * abs(capture_hist_bonus) / MAX_HISTORY;
-
-                        /*
-                        // Capture history malus
-                        for (int32_t i = 0; i < captures_searched_idx; i++){
-                            Move capture = captures_searched[i];
-                            to = capture.to().index();
-                            move_piece = static_cast<int32_t>(board.at(capture.from()).internal());
-                            captured = static_cast<int32_t>(board.at(capture.to()).internal());
-
-                            capture_hist[move_piece][to][captured] -= 300 * depth * depth + 280 * depth + 50;
-                        }
-                            */
                     }
 
                     break;
