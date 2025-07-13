@@ -460,7 +460,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                         // Capture history bonus
                         // [piece][to][captured]
                         int32_t captured = static_cast<int32_t>(board.at(current_move.to()).internal());
-                        int32_t capture_hist_bonus = clamp(depth * depth, -MAX_HISTORY, MAX_HISTORY);
+                        int32_t capture_hist_bonus = clamp(500 * depth * depth + 200 * depth + 150, -MAX_HISTORY, MAX_HISTORY);
                         capture_hist[move_piece][to][captured] += capture_hist_bonus - capture_hist[move_piece][to][captured]  * abs(capture_hist_bonus) / MAX_HISTORY;
 
                         // Capture history malus
@@ -470,7 +470,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                             move_piece = static_cast<int32_t>(board.at(capture.from()).internal());
                             captured = static_cast<int32_t>(board.at(capture.to()).internal());
 
-                            capture_hist[move_piece][to][captured] = clamp(capture_hist[move_piece][to][captured] - depth * depth, -MAX_HISTORY, MAX_HISTORY);
+                            capture_hist[move_piece][to][captured] -= 300 * depth * depth + 280 * depth + 50;
                         }
                     }
 
