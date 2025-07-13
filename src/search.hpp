@@ -63,6 +63,22 @@ inline void reset_continuation_history() {
     }
 }
 
+/*
+// Capture history [move piece][to][capture piece]
+extern int32_t capture_hist[12][64][12];
+inline void reset_capture_hist() {
+    for (int32_t prev = 0; prev < 12; ++prev) {
+        for (int32_t prev_sq = 0; prev_sq < 64; ++prev_sq) {
+            for (int32_t curr = 0; curr < 12; ++curr) {
+                for (int32_t curr_sq = 0; curr_sq < 64; ++curr_sq){
+                    one_ply_conthist[prev][prev_sq][curr][curr_sq] = 0;
+                    two_ply_conthist[prev][prev_sq][curr][curr_sq] = 0;
+                }
+            }
+        }
+    }
+}
+    */
 
 // The global depth variable
 extern int32_t global_depth;
