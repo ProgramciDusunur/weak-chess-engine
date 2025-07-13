@@ -33,10 +33,20 @@ inline void sort_moves(chess::Board& board, chess::Movelist& movelist, bool tt_h
         int32_t score = 0;
 
         if (tt_hit && move.move() == tt_move) {
+            // TT-Moves ordering
             score = TT_BONUS;
         } else if (board.isCapture(move)) {
+            // MVV-LVA ordering
             score = mvv_lva(board, move);
+            
+            // Capture history
+            int32_t captured = static_cast<int32_t>(board.at(move.to()).internal());
+            int32_t move_piece = static_cast<int32_t>(board.at(move.from()).internal());
+            int32_t to = move.to().index();
+            score += capture_hist[move_piece][to][captured];
+            
         } else if (killers[0][ply] == move || killers[1][ply] == move) {
+            // Killer move history
             score = KILLER_BONUS;
         } else {
             score = quiet_history[board.sideToMove() == chess::Color::WHITE][move.from().index()][move.to().index()];

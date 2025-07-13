@@ -206,7 +206,6 @@ int32_t main(int32_t argc, char* argv[]) {
         else if (words[0] == "ucinewgame"){
             tt.clear();
             reset_continuation_history();
-            reset_quiet_history();
         }
 
         // Parse the position command. The position commands comes in a number
@@ -272,7 +271,12 @@ int32_t main(int32_t argc, char* argv[]) {
             total_nodes = 0;
             max_hard_time_ms = 10000;
             max_soft_time_ms = 30000;
+
+            // Reset all histories when "go" is given except continuation history.
             reset_killers();
+            reset_quiet_history();
+            reset_capture_hist();
+
             if (words.size() > 1){
                 if (words[1] == "infinite"){
                     max_hard_time_ms = 10000000000ll;

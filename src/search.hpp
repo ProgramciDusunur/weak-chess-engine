@@ -63,7 +63,7 @@ inline void reset_continuation_history() {
     }
 }
 
-/*
+
 // Capture history [move piece][to][capture piece]
 extern int32_t capture_hist[12][64][12];
 inline void reset_capture_hist() {
@@ -78,7 +78,7 @@ inline void reset_capture_hist() {
         }
     }
 }
-    */
+
 
 // The global depth variable
 extern int32_t global_depth;
