@@ -295,6 +295,41 @@ const uint64_t QUEENSIDE_HALF_MASK[64] = {
     1085102592571150095ull,    1085102592571150095ull
 };
 
+const uint64_t LEFT_RIGHT_COLUMN_MASK[64] = {
+    144680345676153346ull,    361700864190383365ull,
+    723401728380766730ull,    1446803456761533460ull,
+    2893606913523066920ull,    5787213827046133840ull,
+    11574427654092267680ull,    4629771061636907072ull,
+    144680345676153346ull,    361700864190383365ull,
+    723401728380766730ull,    1446803456761533460ull,
+    2893606913523066920ull,    5787213827046133840ull,
+    11574427654092267680ull,    4629771061636907072ull,
+    144680345676153346ull,    361700864190383365ull,
+    723401728380766730ull,    1446803456761533460ull,
+    2893606913523066920ull,    5787213827046133840ull,
+    11574427654092267680ull,    4629771061636907072ull,
+    144680345676153346ull,    361700864190383365ull,
+    723401728380766730ull,    1446803456761533460ull,
+    2893606913523066920ull,    5787213827046133840ull,
+    11574427654092267680ull,    4629771061636907072ull,
+    144680345676153346ull,    361700864190383365ull,
+    723401728380766730ull,    1446803456761533460ull,
+    2893606913523066920ull,    5787213827046133840ull,
+    11574427654092267680ull,    4629771061636907072ull,
+    144680345676153346ull,    361700864190383365ull,
+    723401728380766730ull,    1446803456761533460ull,
+    2893606913523066920ull,    5787213827046133840ull,
+    11574427654092267680ull,    4629771061636907072ull,
+    144680345676153346ull,    361700864190383365ull,
+    723401728380766730ull,    1446803456761533460ull,
+    2893606913523066920ull,    5787213827046133840ull,
+    11574427654092267680ull,    4629771061636907072ull,
+    144680345676153346ull,    361700864190383365ull,
+    723401728380766730ull,    1446803456761533460ull,
+    2893606913523066920ull,    5787213827046133840ull,
+    11574427654092267680ull,    4629771061636907072ull
+};
+
 // Helper: Set a bit
 inline void set_bit(uint64_t& bb, int square) {
     bb |= (1ULL << square);
@@ -569,6 +604,39 @@ void generate_queenside_half_masks() {
 }
 
 
+uint64_t left_and_right_column_mask(int square) {
+    int file = square % 8;
+    uint64_t mask = 0;
+
+    // Left file
+    if (file > 0) {
+        int left_file = file - 1;
+        for (int r = 0; r < 8; ++r)
+            mask |= (1ULL << (r * 8 + left_file));
+    }
+
+    // Right file
+    if (file < 7) {
+        int right_file = file + 1;
+        for (int r = 0; r < 8; ++r)
+            mask |= (1ULL << (r * 8 + right_file));
+    }
+
+    return mask;
+}
+
+void generate_left_and_right_column_masks() {
+    cout << "const uint64_t LEFT_RIGHT_COLUMN_MASK[64] = {\n";
+    for (int i = 0; i < 64; ++i) {
+        cout << "    " << left_and_right_column_mask(i) << "ull";
+        if (i != 63) cout << ",";
+        if (i % 2 == 1) cout << "\n";
+    }
+    cout << "};\n";
+}
+
+
+
 // Test
 int main() {
     /*
@@ -629,7 +697,13 @@ int main() {
     // generate_queenside_half_masks();
     // print_bitboard(QUEENSIDE_HALF_MASK[D8]);
 
-    print_bitboard(1ull << E4);
+    // print_bitboard(1ull << E4);
+
+    // generate_left_and_right_column_masks();
+
+    print_bitboard(LEFT_RIGHT_COLUMN_MASK[A1]);
+    print_bitboard(LEFT_RIGHT_COLUMN_MASK[A8]);
+    print_bitboard(LEFT_RIGHT_COLUMN_MASK[E3]);
 
     return 0;
 
