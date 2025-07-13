@@ -277,6 +277,10 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
     int32_t quiets_searched_idx = 0;
 
     // Store captures searched for history malus
+    Move captures_searched[1024]{};
+    int32_t captures_searched_idx = 0;
+
+    // Store captures searched for history malus
     // Move captures_searched[1024]{};
     // int32_t quiets_searched_idx = 0;
 
@@ -350,7 +354,8 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
         if (board.inCheck())
             extension++;
 
-        quiets_searched[quiets_searched_idx++] = current_move;
+        if (!is_noisy_move) quiets_searched[quiets_searched_idx++] = current_move;
+        else captures_searched[captures_searched_idx++] = current_move;
 
         // To update continuation history
         SearchInfo info{};
@@ -442,7 +447,7 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                             // Conthist Malus
                             // 1-ply (Countermoves)
                             if (parent_move_piece != -1 && parent_move_square != -1)
-                                one_ply_conthist[parent_move_piece][parent_move_square][move_piece][to]  -= 300 * depth * depth + 280 * depth + 50;
+                                one_ply_conthist[parent_move_piece][parent_move_square][move_piece][to] -= 300 * depth * depth + 280 * depth + 50;
 
                             // 2-ply (Follow-up moves)
                             if (parent_parent_move_piece != -1 && parent_parent_move_square != -1)
@@ -457,6 +462,16 @@ int32_t alpha_beta(Board &board, int32_t depth, int32_t alpha, int32_t beta, int
                         int32_t captured = static_cast<int32_t>(board.at(current_move.to()).internal());
                         int32_t capture_hist_bonus = clamp(500 * depth * depth + 200 * depth + 150, -MAX_HISTORY, MAX_HISTORY);
                         capture_hist[move_piece][to][captured] += capture_hist_bonus - capture_hist[move_piece][to][captured]  * abs(capture_hist_bonus) / MAX_HISTORY;
+
+                        // Capture history malus
+                        for (int32_t i = 0; i < captures_searched_idx; i++){
+                            Move capture = captures_searched[i];
+                            to = capture.to().index();
+                            move_piece = static_cast<int32_t>(board.at(capture.from()).internal());
+                            captured = static_cast<int32_t>(board.at(capture.to()).internal());
+
+                            capture_hist[move_piece][to][captured] -= 300 * depth * depth + 280 * depth + 50;
+                        }
                     }
 
                     break;
