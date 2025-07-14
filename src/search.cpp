@@ -82,8 +82,14 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
     // Move ordering
     if (capture_moves.size() != 0) sort_captures(board, capture_moves, tt_hit, entry.best_move);
 
+    // Qsearch pruning stuff
+    int32_t moves_played = 0;
+
     Move current_best_move{};
     for (int idx = 0; idx < capture_moves.size(); idx++){
+        if (!board.inCheck() && moves_played >= 2)
+            break;
+
         Move current_move = capture_moves[idx];
 
         // QSEE pruning, if a move is obviously losing, don't search it
@@ -92,6 +98,7 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
         // Basic make and undo functionality. Copy-make should be faster but that
         // debugging is for later
         board.makeMove(current_move);
+        moves_played++;
         int32_t score = -q_search(board, -beta, -alpha, ply + 1);
         board.unmakeMove(current_move);
 
