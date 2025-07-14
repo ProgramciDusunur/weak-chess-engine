@@ -14,6 +14,7 @@
 #include "see.hpp"
 #include "defaults.hpp"
 #include "history.hpp"
+#include "moves.hpp"
 
 using namespace chess;
 using namespace std;
@@ -75,6 +76,13 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
     // Max ply cutoff
     if (ply >= MAX_SEARCH_PLY)
         return alpha;
+
+    // Delta Pruning - Even when best possible capture is made + promotion combination
+    // is still not enough to cover the distance between alpha and eval, playing a move
+    // is futile. Minor boost for pawn captures idea from Ethereal: 
+    // https://github.com/AndyGrant/Ethereal/blob/0e47e9b67f345c75eb965d9fb3e2493b6a11d09a/src/search.c#L872
+    if (eval + max(142, move_best_case_value(board)) < alpha)
+        return eval;
 
     // Get all legal moves for our moveloop in our search
     Movelist capture_moves{};
