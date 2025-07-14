@@ -39,6 +39,10 @@ void sort_moves(Board& board, Movelist& movelist, bool tt_hit, uint16_t tt_move,
         } else if (board.isCapture(move)) {
             // MVV-LVA ordering
             score = mvv_lva(board, move);
+            
+            // See ordering, put all bad captures at the far end of the ordered list
+            // by making its value a really big negative number
+            score += see(board, move, 0) ? 0 : -10000000;
 
         } else if (killers[0][ply] == move || killers[1][ply] == move) {
             // Killer move history
@@ -88,6 +92,10 @@ void sort_captures(Board& board, Movelist& movelist, bool tt_hit, uint16_t tt_mo
             score = TT_BONUS;
         } else {
             score = mvv_lva(board, move);
+
+            // See ordering, put all bad captures at the far end of the ordered list
+            // by making its value a really big negative number
+            score += see(board, move, 0) ? 0 : -10000000;
         }
 
         scores[i] = score;
