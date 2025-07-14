@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <utility>
 #include <cassert>
+#include <vector>
 
 #include "chess.hpp"
 #include "ordering.hpp"
@@ -39,6 +40,10 @@ void sort_moves(Board& board, Movelist& movelist, bool tt_hit, uint16_t tt_move,
         } else if (board.isCapture(move)) {
             // MVV-LVA ordering
             score = mvv_lva(board, move);
+            
+            // See ordering, put all bad captures at the far end of the ordered list
+            // by making its value a really big negative number
+            score += see(board, move, 0) ? 0 : -10000000;
 
         } else if (killers[0][ply] == move || killers[1][ply] == move) {
             // Killer move history
@@ -74,26 +79,32 @@ void sort_moves(Board& board, Movelist& movelist, bool tt_hit, uint16_t tt_move,
     }
 }
 
-void sort_captures(Board& board, Movelist& movelist, bool tt_hit, uint16_t tt_move) {
+// Special captures sorting
+// returns a boolean vector matching the see bool result of each capture
+std::vector<bool> sort_captures(Board& board, Movelist& movelist, bool tt_hit, std::uint16_t tt_move) {
     const size_t move_count = movelist.size();
     assert(move_count <= 256);
 
     std::array<int32_t, 256> scores;
+    std::array<bool, 256> sees;
 
     for (size_t i = 0; i < move_count; i++) {
         const auto& move = movelist[i];
         int32_t score = 0;
+        bool good_see = see(board, move, 0);
 
         if (tt_hit && move.move() == tt_move) {
             score = TT_BONUS;
         } else {
             score = mvv_lva(board, move);
+            score += good_see ? 0 : -10000000;
         }
 
         scores[i] = score;
+        sees[i] = good_see;
     }
 
-    // In-place selection sort
+    // In-place selection sort on scores (and sync sees + movelist)
     for (size_t i = 0; i < move_count; i++) {
         size_t max_idx = i;
         for (size_t j = i + 1; j < move_count; j++) {
@@ -103,7 +114,10 @@ void sort_captures(Board& board, Movelist& movelist, bool tt_hit, uint16_t tt_mo
         }
         if (max_idx != i) {
             std::swap(scores[i], scores[max_idx]);
+            std::swap(sees[i], sees[max_idx]);
             std::swap(movelist[i], movelist[max_idx]);
         }
     }
+
+    return std::vector<bool>(sees.begin(), sees.begin() + move_count);
 }
