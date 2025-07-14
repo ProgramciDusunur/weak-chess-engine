@@ -87,6 +87,8 @@ int32_t q_search(Board &board, int32_t alpha, int32_t beta, int32_t ply){
 
     Move current_best_move{};
     for (int idx = 0; idx < capture_moves.size(); idx++){
+
+        // QSearch movecount pruning
         if (!board.inCheck() && moves_played >= 2)
             break;
 
@@ -509,6 +511,7 @@ int32_t search_root(Board &board){
                 new_score = alpha_beta(board, global_depth, alpha, beta, 0, false, info);
                 int64_t elapsed_time = elapsed_ms();
 
+                // Upperbound
                 if (new_score <= alpha){
                     cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << alpha << " upperbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move);
                     
@@ -520,6 +523,8 @@ int32_t search_root(Board &board){
                     beta = (alpha + beta) / 2;
                     alpha = max(-POSITIVE_INFINITY, new_score - delta);
                 }
+
+                // Lowerbound
                 else if (new_score >= beta){
                     cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << beta << " lowerbound nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move);
                     
@@ -530,6 +535,8 @@ int32_t search_root(Board &board){
 
                     beta = min(POSITIVE_INFINITY, new_score + delta);
                 }
+
+                // Score falls within window (exact)
                 else {
                     cout << "info depth " << global_depth << " seldepth " << seldpeth << " time " << elapsed_time << " score cp " << new_score << " nodes " << total_nodes << " nps " <<   (1000 * total_nodes) / (elapsed_time + 1) << " pv " << uci::moveToUci(root_best_move);
                     
